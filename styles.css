@@ -106,13 +106,13 @@ body {
   margin: 0 0 6px;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #ea8996;
+  color: #ca3e52;
 }
 
 .gallery-label {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #ea8996;
+  color: #ca3e52;
   margin-bottom: 10px;
 }
 
@@ -140,18 +140,20 @@ body {
 
 .filter-button {
   border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fffdfe;
-  color: #111827;
+  background: #fff4f6;
+  color: #ca3e52;
   padding: 6px 10px;
+  border: 1px solid rgba(202, 62, 82, 0.25);
   border-radius: 999px;
   font-size: 11px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
+  box-shadow: 0 2px 6px rgba(202, 62, 82, 0.08);
 }
 
 .filter-button.active,
 .filter-button:hover {
-  background: #e99184;
+  background: #ca3e52;
   color: #fffdfe;
   border-color: transparent;
   font-weight: 700;
@@ -160,13 +162,17 @@ body {
 .filter-button.clear-button {
   background: #fffdfe;
   color: #111827;
-  border-color: rgba(156, 163, 175, 0.7);
+  border-color: rgba(202, 62, 82, 0.25);
+  box-shadow: 0 2px 6px rgba(202, 62, 82, 0.08);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .filter-button.clear-button:hover {
-  background: #fffdfe;
-  color: #111827;
-  border-color: rgba(107, 114, 128, 0.9);
+  background: #111827;
+  color: #fffdfe;
+  border-color: transparent;
+  font-weight: 700;
 }
 
 .template-grid {
@@ -193,14 +199,6 @@ body {
   border: none;
   position: relative;
   flex: 0 0 auto;
-}
-
-.template-card:hover {
-  transform: none;
-}
-
-.template-card.active {
-  padding: 1px;
 }
 
 .template-card img {
