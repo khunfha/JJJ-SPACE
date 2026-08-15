@@ -257,8 +257,8 @@ body {
   flex-shrink: 0;
 }
 
-.filter-option:hover {
-  background: #ffe9ee;
+.filter-option:nth-of-type(odd) {
+  background: #faefed;
 }
 
 .template-grid {
