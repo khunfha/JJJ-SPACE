@@ -29,8 +29,8 @@ body {
 
 .hero {
   text-align: center;
-  margin-bottom: 18px;
-  padding: 24px 16px;
+  margin-bottom: 4px;
+  padding: 4px 4px;
   position: relative;
   overflow: hidden;
 }
@@ -42,7 +42,7 @@ body {
   background: #fff4f6;
   color: #ca3e52;
   border: 1px solid rgba(202, 62, 82, 0.25);
-  border-radius: 999px;
+  border-radius: 10px;
   padding: 6px 10px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -151,7 +151,7 @@ body {
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex: 1 1 240px;
   min-width: 200px;
 }
@@ -176,13 +176,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 2px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 6px;
   border: 1px solid rgba(202, 62, 82, 0.25);
   background: #fff4f6;
   color: #ca3e52;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -197,6 +197,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-left: 6px;
 }
 
 .filter-dropdown-arrow {
@@ -288,6 +289,10 @@ body {
 
 .filter-option:nth-of-type(odd) {
   background: #faefed;
+}
+
+.filter-option:hover {
+  background: #ffe9ee;
 }
 
 .template-grid {
