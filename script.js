@@ -576,6 +576,7 @@ function filterCards() {
 
 function init() {
   setupCheckboxFilters();
+  setupBackToTop();
 
   sourceGroups.forEach((group) => {
     const section = document.createElement("section");
@@ -607,6 +608,19 @@ function init() {
   if (firstCard) {
     firstCard.classList.add("active");
   }
+}
+
+function setupBackToTop() {
+  const backToTop = document.getElementById("backToTop");
+  if (!backToTop) return;
+
+  backToTop.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", () => {
+    backToTop.classList.toggle("visible", window.scrollY > 150);
+  });
 }
 
 init();
