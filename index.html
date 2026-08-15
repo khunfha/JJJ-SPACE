@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JANJINGJINGJEWEL PHOTOCARD LIST</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -17,15 +20,33 @@
       <section class="builder">
         <div class="filter-row">
           <div class="filter-title">Choose your J</div>
-          <div class="filter-bar" id="filterBar"></div>
+          <div class="filter-dropdown" id="categoryFilterDropdown">
+            <button type="button" class="filter-dropdown-toggle" id="categoryFilterToggle" aria-haspopup="true" aria-expanded="false">
+              <span class="filter-dropdown-label">All</span>
+              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
+            </button>
+            <div class="filter-options" id="categoryFilter" aria-label="Choose your J"></div>
+          </div>
         </div>
         <div class="filter-row">
           <div class="filter-title">Rarity</div>
-          <div class="filter-bar" id="rarityFilterBar"></div>
+          <div class="filter-dropdown" id="rarityFilterDropdown">
+            <button type="button" class="filter-dropdown-toggle" id="rarityFilterToggle" aria-haspopup="true" aria-expanded="false">
+              <span class="filter-dropdown-label">All</span>
+              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
+            </button>
+            <div class="filter-options" id="rarityFilter" aria-label="Rarity"></div>
+          </div>
         </div>
         <div class="filter-row">
           <div class="filter-title">Collections</div>
-          <div class="filter-bar folder-filter-bar" id="folderFilterBar"></div>
+          <div class="filter-dropdown" id="folderFilterDropdown">
+            <button type="button" class="filter-dropdown-toggle" id="folderFilterToggle" aria-haspopup="true" aria-expanded="false">
+              <span class="filter-dropdown-label">All</span>
+              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
+            </button>
+            <div class="filter-options" id="folderFilter" aria-label="Collections"></div>
+          </div>
         </div>
         <div class="gallery" id="galleryGroups"></div>
       </section>
