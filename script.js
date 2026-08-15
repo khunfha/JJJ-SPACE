@@ -257,19 +257,207 @@ const sourceGroups = [
       "11-jewel-ssr.png",
     ],
   },
+  {
+    folder: "pop-up fuku 2026",
+    title: "GMMTV POP-UP STORE IN FUKUOKA 2026 Girls Random Card",
+    files: [
+      "12-c-j1.png",
+      "12-c-j2.png",
+      "12-c-j3.png",
+      "12-c-jj1.png",
+      "12-c-jj2.png",
+      "12-c-jj3.png",
+      "12-c-jjj-secret.png",
+    ],
+  },
 ];
 
 const galleryGroups = document.getElementById("galleryGroups");
 const pageCount = document.getElementById("pageCount");
-const filterBar = document.getElementById("filterBar");
-const rarityFilterBar = document.getElementById("rarityFilterBar");
-const folderFilterBar = document.getElementById("folderFilterBar");
-const categoryFilterTags = ["All", "JAN", "JINGJING", "JANJINGJING", "JEWEL"];
-const rarityFilterTags = ["All", "NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE"];
-const filterFolders = ["All", ...sourceGroups.map((group) => group.title)];
-let activeCategoryFilters = ["All"];
-let activeRarityFilters = ["All"];
-let activeFolderFilters = ["All"];
+const categoryFilterContainer = document.getElementById("categoryFilter");
+const rarityFilterContainer = document.getElementById("rarityFilter");
+const folderFilterContainer = document.getElementById("folderFilter");
+const filterDropdowns = Array.from(document.querySelectorAll(".filter-dropdown"));
+const categoryFilterTags = ["JAN", "JINGJING", "JANJINGJING", "JEWEL"];
+const categoryFilterIcons = {
+  JAN: "./source/header/jan.png",
+  JINGJING: "./source/header/jingjing.png",
+  JEWEL: "./source/header/jewel.png",
+  JANJINGJING: "./source/header/janjingjing.png",
+  JJJ: "./source/header/jjj.png",
+};
+const rarityFilterTags = ["NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE"];
+const filterFolders = [...new Set(sourceGroups.map((group) => group.title))];
+let activeCategoryFilters = [...categoryFilterTags];
+let activeRarityFilters = [...rarityFilterTags];
+let activeFolderFilters = [...filterFolders];
+
+function normalizeCheckboxValues(selectedValues) {
+  if (!selectedValues) {
+    return [];
+  }
+
+  return [...new Set(selectedValues.filter(Boolean))];
+}
+
+function syncCheckboxGroup(container, selectedValues) {
+  const normalized = normalizeCheckboxValues(selectedValues);
+
+  container.querySelectorAll('input[type="checkbox"][data-option="true"]').forEach((input) => {
+    input.checked = normalized.includes(input.value);
+  });
+}
+
+function updateDropdownLabel(container, selectedValues) {
+  const dropdown = container.closest(".filter-dropdown");
+  if (!dropdown) return;
+
+  const labelEl = dropdown.querySelector(".filter-dropdown-label");
+  if (!labelEl) return;
+
+  const normalized = normalizeCheckboxValues(selectedValues);
+  const totalOptions = container.querySelectorAll('input[type="checkbox"]').length;
+  labelEl.textContent = normalized.length === 0
+    ? "None"
+    : normalized.length === totalOptions
+      ? "All"
+      : normalized.length === 1
+        ? normalized[0]
+        : `${normalized.length} selected`;
+}
+
+function closeAllDropdowns(except) {
+  filterDropdowns.forEach((dropdown) => {
+    if (dropdown !== except) {
+      dropdown.classList.remove("open");
+      const toggle = dropdown.querySelector(".filter-dropdown-toggle");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+function setupDropdownToggles() {
+  filterDropdowns.forEach((dropdown) => {
+    const toggle = dropdown.querySelector(".filter-dropdown-toggle");
+    if (!toggle) return;
+
+    toggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const isOpen = dropdown.classList.contains("open");
+      closeAllDropdowns(dropdown);
+      dropdown.classList.toggle("open", !isOpen);
+      toggle.setAttribute("aria-expanded", String(!isOpen));
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!filterDropdowns.some((dropdown) => dropdown.contains(event.target))) {
+      closeAllDropdowns(null);
+    }
+  });
+}
+
+function createCheckboxFilterGroup(container, options, selectedValues, onChange, config = {}) {
+  const { selectAllLabel, icons } = config;
+  container.innerHTML = "";
+  updateDropdownLabel(container, selectedValues);
+
+  const createIcon = (optionValue) => {
+    const iconSrc = icons && icons[optionValue];
+    if (!iconSrc) return null;
+
+    const icon = document.createElement("img");
+    icon.src = iconSrc;
+    icon.alt = "";
+    icon.className = "filter-option-icon";
+    return icon;
+  };
+
+  let selectAllCheckbox = null;
+
+  if (selectAllLabel) {
+    const label = document.createElement("label");
+    label.className = "filter-option filter-option-select-all";
+
+    selectAllCheckbox = document.createElement("input");
+    selectAllCheckbox.type = "checkbox";
+    selectAllCheckbox.checked = selectedValues.length === options.length;
+
+    selectAllCheckbox.addEventListener("change", () => {
+      const nextValues = selectAllCheckbox.checked ? [...options] : [];
+      syncCheckboxGroup(container, nextValues);
+      updateDropdownLabel(container, nextValues);
+      onChange(nextValues);
+    });
+
+    const icon = createIcon(selectAllLabel);
+    const text = document.createElement("span");
+    text.textContent = selectAllLabel;
+
+    label.appendChild(selectAllCheckbox);
+    if (icon) label.appendChild(icon);
+    label.appendChild(text);
+    container.appendChild(label);
+  } else {
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "filter-actions-row";
+
+    const selectAllButton = document.createElement("button");
+    selectAllButton.type = "button";
+    selectAllButton.className = "filter-clear-btn";
+    selectAllButton.textContent = "Select All";
+    selectAllButton.addEventListener("click", () => {
+      syncCheckboxGroup(container, options);
+      updateDropdownLabel(container, options);
+      onChange(options);
+    });
+
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.className = "filter-clear-btn";
+    clearButton.textContent = "Clear";
+    clearButton.addEventListener("click", () => {
+      syncCheckboxGroup(container, []);
+      updateDropdownLabel(container, []);
+      onChange([]);
+    });
+
+    actionsRow.appendChild(selectAllButton);
+    actionsRow.appendChild(clearButton);
+    container.appendChild(actionsRow);
+  }
+
+  options.forEach((optionValue) => {
+    const label = document.createElement("label");
+    label.className = "filter-option";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = optionValue;
+    checkbox.dataset.option = "true";
+    checkbox.checked = selectedValues.includes(optionValue);
+
+    checkbox.addEventListener("change", () => {
+      const checkedValues = Array.from(container.querySelectorAll('input[type="checkbox"][data-option="true"]:checked')).map((input) => input.value);
+      const nextValues = normalizeCheckboxValues(checkedValues);
+      syncCheckboxGroup(container, nextValues);
+      updateDropdownLabel(container, nextValues);
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = nextValues.length === options.length;
+      }
+      onChange(nextValues);
+    });
+
+    const text = document.createElement("span");
+    text.textContent = optionValue;
+
+    label.appendChild(checkbox);
+    const icon = createIcon(optionValue);
+    if (icon) label.appendChild(icon);
+    label.appendChild(text);
+    container.appendChild(label);
+  });
+}
 
 function createTemplateCard(src, alt, fileName) {
   const card = document.createElement("button");
@@ -339,162 +527,23 @@ function createTemplateCard(src, alt, fileName) {
   return card;
 }
 
-function updateFilterButtonState(container, activeFilters) {
-  container.querySelectorAll(".filter-button").forEach((node) => node.classList.remove("active"));
-  if (activeFilters.includes("All")) {
-    const allButton = Array.from(container.children).find((node) => node.textContent === "All");
-    if (allButton) allButton.classList.add("active");
-  } else {
-    Array.from(container.children).forEach((node) => {
-      if (activeFilters.includes(node.textContent)) {
-        node.classList.add("active");
-      }
-    });
-  }
-}
+function setupCheckboxFilters() {
+  setupDropdownToggles();
 
-function createCategoryFilterButtons() {
-  filterBar.innerHTML = "";
-  categoryFilterTags.forEach((tag) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "filter-button";
-    button.textContent = tag;
-    button.addEventListener("click", () => {
-      if (tag === "All") {
-        activeCategoryFilters = ["All"];
-      } else {
-        const index = activeCategoryFilters.indexOf(tag);
-        if (index === -1) {
-          activeCategoryFilters.push(tag);
-        } else {
-          activeCategoryFilters.splice(index, 1);
-        }
-        if (activeCategoryFilters.length === 0) {
-          activeCategoryFilters = ["All"];
-        } else {
-          const allIndex = activeCategoryFilters.indexOf("All");
-          if (allIndex !== -1) {
-            activeCategoryFilters.splice(allIndex, 1);
-          }
-        }
-      }
-      filterCards();
-      updateFilterButtonState(filterBar, activeCategoryFilters);
-    });
-    filterBar.appendChild(button);
-  });
-
-  const clearButton = document.createElement("button");
-  clearButton.type = "button";
-  clearButton.className = "filter-button clear-button";
-  clearButton.textContent = "Clear";
-  clearButton.addEventListener("click", () => {
-    activeCategoryFilters = ["All"];
+  createCheckboxFilterGroup(categoryFilterContainer, categoryFilterTags, activeCategoryFilters, (nextValues) => {
+    activeCategoryFilters = nextValues;
     filterCards();
-    updateFilterButtonState(filterBar, activeCategoryFilters);
-  });
-  filterBar.appendChild(clearButton);
-}
+  }, { selectAllLabel: "JJJ", icons: categoryFilterIcons });
 
-function createRarityFilterButtons() {
-  rarityFilterBar.innerHTML = "";
-  rarityFilterTags.forEach((tag) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "filter-button";
-    button.textContent = tag;
-    button.addEventListener("click", () => {
-      if (tag === "All") {
-        activeRarityFilters = ["All"];
-      } else {
-        const index = activeRarityFilters.indexOf(tag);
-        if (index === -1) {
-          activeRarityFilters.push(tag);
-        } else {
-          activeRarityFilters.splice(index, 1);
-        }
-        if (activeRarityFilters.length === 0) {
-          activeRarityFilters = ["All"];
-        } else {
-          const allIndex = activeRarityFilters.indexOf("All");
-          if (allIndex !== -1) {
-            activeRarityFilters.splice(allIndex, 1);
-          }
-        }
-      }
-      filterCards();
-      updateFilterButtonState(rarityFilterBar, activeRarityFilters);
-    });
-    rarityFilterBar.appendChild(button);
-  });
-
-  const clearButton = document.createElement("button");
-  clearButton.type = "button";
-  clearButton.className = "filter-button clear-button";
-  clearButton.textContent = "Clear";
-  clearButton.addEventListener("click", () => {
-    activeRarityFilters = ["All"];
+  createCheckboxFilterGroup(rarityFilterContainer, rarityFilterTags, activeRarityFilters, (nextValues) => {
+    activeRarityFilters = nextValues;
     filterCards();
-    updateFilterButtonState(rarityFilterBar, activeRarityFilters);
-  });
-  rarityFilterBar.appendChild(clearButton);
-}
-
-function createFolderFilterButtons() {
-  folderFilterBar.innerHTML = "";
-  filterFolders.forEach((folder) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "filter-button";
-    button.textContent = folder;
-    button.addEventListener("click", () => {
-      if (folder === "All") {
-        activeFolderFilters = ["All"];
-      } else {
-        const index = activeFolderFilters.indexOf(folder);
-        if (index === -1) {
-          activeFolderFilters.push(folder);
-        } else {
-          activeFolderFilters.splice(index, 1);
-        }
-        if (activeFolderFilters.length === 0) {
-          activeFolderFilters = ["All"];
-        } else {
-          const allIndex = activeFolderFilters.indexOf("All");
-          if (allIndex !== -1) {
-            activeFolderFilters.splice(allIndex, 1);
-          }
-        }
-      }
-      filterCards();
-      document.querySelectorAll("#folderFilterBar .filter-button").forEach((node) => node.classList.remove("active"));
-      if (activeFolderFilters.includes("All")) {
-        const allButton = Array.from(folderFilterBar.children).find((node) => node.textContent === "All");
-        if (allButton) allButton.classList.add("active");
-      } else {
-        Array.from(folderFilterBar.children).forEach((node) => {
-          if (activeFolderFilters.includes(node.textContent)) {
-            node.classList.add("active");
-          }
-        });
-      }
-    });
-    folderFilterBar.appendChild(button);
   });
 
-  const clearFolderButton = document.createElement("button");
-  clearFolderButton.type = "button";
-  clearFolderButton.className = "filter-button clear-button";
-  clearFolderButton.textContent = "Clear";
-  clearFolderButton.addEventListener("click", () => {
-    activeFolderFilters = ["All"];
+  createCheckboxFilterGroup(folderFilterContainer, filterFolders, activeFolderFilters, (nextValues) => {
+    activeFolderFilters = nextValues;
     filterCards();
-    document.querySelectorAll("#folderFilterBar .filter-button").forEach((node) => node.classList.remove("active"));
-    const allButton = Array.from(folderFilterBar.children).find((node) => node.textContent === "All");
-    if (allButton) allButton.classList.add("active");
   });
-  folderFilterBar.appendChild(clearFolderButton);
 }
 
 function updatePageCount() {
@@ -507,14 +556,13 @@ function updatePageCount() {
 function filterCards() {
   document.querySelectorAll(".template-card").forEach((card) => {
     const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
-    const categoryMatch = activeCategoryFilters.includes("All") || tags.some((tag) => activeCategoryFilters.includes(tag));
+    const categoryMatch = tags.some((tag) => activeCategoryFilters.includes(tag));
 
     const hasRarityTag = tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
-    const rarityMatch = activeRarityFilters.includes("All") ||
-      (activeRarityFilters.includes("NORMAL") && !hasRarityTag) ||
+    const rarityMatch = (activeRarityFilters.includes("NORMAL") && !hasRarityTag) ||
       tags.some((tag) => activeRarityFilters.includes(tag));
 
-    const folderMatch = activeFolderFilters.includes("All") || activeFolderFilters.includes(card.dataset.folder);
+    const folderMatch = activeFolderFilters.includes(card.dataset.folder);
     card.style.display = categoryMatch && rarityMatch && folderMatch ? "inline-flex" : "none";
   });
 
@@ -527,9 +575,8 @@ function filterCards() {
 }
 
 function init() {
-  createCategoryFilterButtons();
-  createRarityFilterButtons();
-  createFolderFilterButtons();
+  setupCheckboxFilters();
+
   sourceGroups.forEach((group) => {
     const section = document.createElement("section");
     section.className = "group-section";
@@ -560,21 +607,6 @@ function init() {
   if (firstCard) {
     firstCard.classList.add("active");
   }
-  const firstCategoryFilter = filterBar.querySelector(".filter-button");
-  if (firstCategoryFilter) {
-    firstCategoryFilter.classList.add("active");
-  }
-
-  const firstRarityFilter = rarityFilterBar.querySelector(".filter-button");
-  if (firstRarityFilter) {
-    firstRarityFilter.classList.add("active");
-  }
-
-  const firstFolderFilter = folderFilterBar.querySelector(".filter-button");
-  if (firstFolderFilter) {
-    firstFolderFilter.classList.add("active");
-  }
-
 }
 
 init();
