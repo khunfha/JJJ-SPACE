@@ -62,6 +62,16 @@
 
     <button type="button" id="backToTop" class="back-to-top" aria-label="Scroll to top">&#9650;</button>
 
+    <div class="export-bar">
+      <div class="export-bar-hint">Click on Photocard to select</div>
+      <div class="export-bar-info" id="selectionCount" aria-live="polite">0 selected</div>
+      <div class="export-bar-actions">
+        <button type="button" class="export-btn export-btn-ghost" id="selectAllBtn">Select All</button>
+        <button type="button" class="export-btn export-btn-ghost" id="clearSelectionBtn">Clear</button>
+        <button type="button" class="export-btn export-btn-primary" id="exportSelectedBtn" disabled>Export Selected (PNG)</button>
+      </div>
+    </div>
+
     <script src="script.js"></script>
   </body>
 </html>
