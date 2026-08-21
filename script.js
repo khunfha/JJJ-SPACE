@@ -520,8 +520,8 @@ function createTemplateCard(src, alt, fileName) {
   }
 
   card.addEventListener("click", () => {
-    document.querySelectorAll(".template-card").forEach((node) => node.classList.remove("active"));
-    card.classList.add("active");
+    card.classList.toggle("selected");
+    updateSelectionState();
   });
 
   return card;
@@ -553,6 +553,340 @@ function updatePageCount() {
   }
 }
 
+function updateSelectionState() {
+  const selectedCards = document.querySelectorAll(".template-card.selected");
+  const selectionCount = document.getElementById("selectionCount");
+  const exportBtn = document.getElementById("exportSelectedBtn");
+
+  if (selectionCount) {
+    selectionCount.textContent = `${selectedCards.length} selected`;
+  }
+  if (exportBtn) {
+    exportBtn.disabled = selectedCards.length === 0;
+    exportBtn.textContent = `Export Selected (PNG)${selectedCards.length ? ` \u2022 ${selectedCards.length}` : ""}`;
+  }
+}
+
+function setupExportBar() {
+  const selectAllBtn = document.getElementById("selectAllBtn");
+  const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+  const exportBtn = document.getElementById("exportSelectedBtn");
+
+  if (selectAllBtn) {
+    selectAllBtn.addEventListener("click", () => {
+      document.querySelectorAll(".template-card").forEach((card) => {
+        if (card.style.display !== "none") {
+          card.classList.add("selected");
+        }
+      });
+      updateSelectionState();
+    });
+  }
+
+  if (clearSelectionBtn) {
+    clearSelectionBtn.addEventListener("click", () => {
+      document.querySelectorAll(".template-card.selected").forEach((card) => card.classList.remove("selected"));
+      updateSelectionState();
+    });
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      exportSelectedAsImage().catch((error) => {
+        console.error("Export failed:", error);
+        alert("Export failed. If this page was opened directly from a file, try running it through a local web server and try again.");
+      });
+    });
+  }
+}
+
+function loadImageElement(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
+}
+
+function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function drawCardOntoCanvas(ctx, image, x, y, imgWidth, imgHeight, borderColor, borderWidth, radius) {
+  // Border is drawn outside the image box, matching the site's `border: Npx solid` on <img>.
+  const contentX = x + borderWidth;
+  const contentY = y + borderWidth;
+
+  ctx.save();
+  drawRoundedRectPath(ctx, contentX, contentY, imgWidth, imgHeight, radius);
+  ctx.clip();
+  if (image) {
+    ctx.drawImage(image, contentX, contentY, imgWidth, imgHeight);
+  }
+  ctx.restore();
+
+  drawRoundedRectPath(
+    ctx,
+    contentX - borderWidth / 2,
+    contentY - borderWidth / 2,
+    imgWidth + borderWidth,
+    imgHeight + borderWidth,
+    radius
+  );
+  ctx.lineWidth = borderWidth;
+  ctx.strokeStyle = borderColor;
+  ctx.stroke();
+}
+
+function wrapTextLines(ctx, text, maxWidth, maxLines) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (!currentLine || ctx.measureText(testLine).width <= maxWidth) {
+      currentLine = testLine;
+      continue;
+    }
+
+    lines.push(currentLine);
+    currentLine = word;
+    if (lines.length === maxLines) {
+      currentLine = "";
+      break;
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  const consumedWordCount = lines.reduce((count, line) => count + line.split(/\s+/).length, 0);
+  if (consumedWordCount < words.length && lines.length > 0) {
+    let lastLine = lines[lines.length - 1];
+    while (lastLine.length > 0 && ctx.measureText(`${lastLine}\u2026`).width > maxWidth) {
+      lastLine = lastLine.slice(0, -1).trimEnd();
+    }
+    lines[lines.length - 1] = `${lastLine}\u2026`;
+  }
+
+  return lines.slice(0, maxLines);
+}
+
+function fitTitleToWidth(ctx, text, maxWidth, maxLines, baseFontSize, minFontSize) {
+  for (let fontSize = baseFontSize; fontSize >= minFontSize; fontSize -= 1) {
+    ctx.font = `700 ${fontSize}px 'Noto Sans Thai', sans-serif`;
+    const lines = wrapTextLines(ctx, text, maxWidth, Infinity);
+    if (lines.length <= maxLines) {
+      return { fontSize, lines };
+    }
+  }
+
+  // Even the smallest font doesn't fit in maxLines: truncate as a last resort.
+  ctx.font = `700 ${minFontSize}px 'Noto Sans Thai', sans-serif`;
+  return { fontSize: minFontSize, lines: wrapTextLines(ctx, text, maxWidth, maxLines) };
+}
+
+async function exportSelectedAsImage() {
+  const groupSections = Array.from(document.querySelectorAll(".group-section"));
+  const groupsData = groupSections
+    .map((section) => ({
+      title: section.querySelector(".group-title")?.textContent ?? "",
+      cards: Array.from(section.querySelectorAll(".template-card.selected")),
+    }))
+    .filter((group) => group.cards.length > 0);
+
+  const totalSelected = groupsData.reduce((sum, group) => sum + group.cards.length, 0);
+  if (totalSelected === 0) {
+    alert("Select at least one photocard to export.");
+    return;
+  }
+
+  const uniqueSources = [...new Set(groupsData.flatMap((group) => group.cards.map((card) => card.querySelector("img").src)))];
+  const loadedImages = new Map();
+  await Promise.all(
+    uniqueSources.map(async (src) => {
+      try {
+        loadedImages.set(src, await loadImageElement(src));
+      } catch (error) {
+        console.warn(error);
+        loadedImages.set(src, null);
+      }
+    })
+  );
+
+  // Render at 2x the site's CSS pixel values (img max-height:100px, card max-width:120px)
+  // so the export matches the on-page look at a crisper resolution, while the gap and
+  // border stay at fixed export pixel sizes (8px gap, 2px border) regardless of scale.
+  const SCALE = 2;
+  const CANVAS_WIDTH = 1500;
+  const PADDING = 32;
+  const CARD_SIZE_FACTOR = 0.72; // 20% larger than the previous 0.6 factor
+  const CARD_MAX_WIDTH = 120 * SCALE * CARD_SIZE_FACTOR;
+  const CARD_MAX_HEIGHT = 100 * SCALE * CARD_SIZE_FACTOR;
+  const GAP = 8;
+  const BORDER_WIDTH = 2;
+  const RADIUS = 10 * SCALE;
+  const HEADER_HEIGHT = 70;
+  const TITLE_BASE_FONT_SIZE = 10;
+  const TITLE_MIN_FONT_SIZE = 6;
+  const TITLE_MAX_LINES = 5;
+  const TITLE_GAP = 6 * SCALE;
+  const FOOTER_HEIGHT = 28;
+
+  const contentWidth = CANVAS_WIDTH - PADDING * 2;
+
+  // Create the canvas up front so its context can measure/wrap title text before final sizing.
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_WIDTH;
+  const ctx = canvas.getContext("2d");
+
+  // Build one continuous list of cards (across all folders) so images can share a row;
+  // only line width determines wrapping, not folder boundaries. Each folder's first card
+  // is tagged so its title can be fitted once we know how much row width its own images span.
+  const items = [];
+
+  groupsData.forEach((group, groupIndex) => {
+    group.cards.forEach((card, cardIndex) => {
+      const img = card.querySelector("img");
+      const image = loadedImages.get(img.src);
+      const tags = card.dataset.tags || "";
+      const isRareColor = card.classList.contains("secret") || tags.includes("SUPER RARE") || tags.includes("SUPER SECRET RARE");
+      const borderColor = isRareColor ? "#ffc600" : "#ca3e52";
+
+      let imgWidth = CARD_MAX_WIDTH;
+      let imgHeight = CARD_MAX_HEIGHT;
+      if (image) {
+        const fitScale = Math.min(CARD_MAX_WIDTH / image.naturalWidth, CARD_MAX_HEIGHT / image.naturalHeight);
+        imgWidth = image.naturalWidth * fitScale;
+        imgHeight = image.naturalHeight * fitScale;
+      }
+
+      items.push({
+        width: imgWidth + BORDER_WIDTH * 2,
+        height: imgHeight + BORDER_WIDTH * 2,
+        imgWidth,
+        imgHeight,
+        borderColor,
+        image,
+        groupIndex,
+        groupTitle: group.title,
+        isFirstOfGroup: cardIndex === 0,
+      });
+    });
+  });
+
+  // Pack items left-to-right, wrapping to a new row only once the row actually runs out of width.
+  const rows = [];
+  let currentRow = [];
+  let currentRowWidth = 0;
+
+  items.forEach((item) => {
+    const neededWidth = item.width + (currentRow.length > 0 ? GAP : 0);
+    if (currentRow.length > 0 && currentRowWidth + neededWidth > contentWidth) {
+      rows.push(currentRow);
+      currentRow = [];
+      currentRowWidth = 0;
+    }
+    currentRow.push(item);
+    currentRowWidth += item.width + (currentRow.length > 1 ? GAP : 0);
+  });
+  if (currentRow.length > 0) {
+    rows.push(currentRow);
+  }
+
+  // Now that rows are settled, fit each folder's title to the width its own images span
+  // within their row (never past a different folder's images), so text can't overlap them.
+  rows.forEach((row) => {
+    row.forEach((item, index) => {
+      if (!item.isFirstOfGroup) return;
+
+      let fitWidth = item.width;
+      for (let next = index + 1; next < row.length && row[next].groupIndex === item.groupIndex; next += 1) {
+        fitWidth += GAP + row[next].width;
+      }
+
+      const { fontSize, lines } = fitTitleToWidth(
+        ctx,
+        item.groupTitle,
+        fitWidth,
+        TITLE_MAX_LINES,
+        TITLE_BASE_FONT_SIZE,
+        TITLE_MIN_FONT_SIZE
+      );
+      const lineHeight = Math.round(fontSize * 1.3);
+
+      item.titleLines = lines;
+      item.titleFontSize = fontSize;
+      item.titleLineHeight = lineHeight;
+      item.titleHeight = lines.length * lineHeight + TITLE_GAP;
+    });
+  });
+
+  const totalHeight =
+    HEADER_HEIGHT +
+    rows.reduce((sum, row) => {
+      const titleSpace = Math.max(0, ...row.map((item) => item.titleHeight || 0));
+      const cardsHeight = Math.max(...row.map((item) => item.height));
+      return sum + titleSpace + cardsHeight + GAP;
+    }, 0) +
+    FOOTER_HEIGHT;
+  canvas.height = totalHeight;
+
+  ctx.fillStyle = "#fdfdf0";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const heroTitle = document.querySelector(".hero h1")?.textContent ?? "";
+  const heroSubtitle = document.querySelector(".hero p")?.textContent ?? "";
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ca3e52";
+  ctx.font = "700 24px 'Noto Sans Thai', sans-serif";
+  ctx.fillText(heroTitle, canvas.width / 2, 34);
+
+  ctx.font = "400 13px 'Noto Sans Thai', sans-serif";
+  ctx.fillStyle = "#4b5563";
+  ctx.fillText(heroSubtitle, canvas.width / 2, 56);
+
+  ctx.textAlign = "left";
+
+  let y = HEADER_HEIGHT;
+  rows.forEach((row) => {
+    const titleSpace = Math.max(0, ...row.map((item) => item.titleHeight || 0));
+    const cardsHeight = Math.max(...row.map((item) => item.height));
+    let x = PADDING;
+
+    row.forEach((item) => {
+      if (item.titleLines) {
+        ctx.fillStyle = "#ca3e52";
+        ctx.font = `700 ${item.titleFontSize}px 'Noto Sans Thai', sans-serif`;
+        item.titleLines.forEach((line, index) => {
+          ctx.fillText(line, x, y + index * item.titleLineHeight + item.titleLineHeight * 0.8);
+        });
+      }
+
+      const cardY = y + titleSpace + (cardsHeight - item.height) / 2;
+      drawCardOntoCanvas(ctx, item.image, x, cardY, item.imgWidth, item.imgHeight, item.borderColor, BORDER_WIDTH, RADIUS);
+      x += item.width + GAP;
+    });
+
+    y += titleSpace + cardsHeight + GAP;
+  });
+
+  const link = document.createElement("a");
+  link.download = `janjingjingjewel-selected-${Date.now()}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 function filterCards() {
   document.querySelectorAll(".template-card").forEach((card) => {
     const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
@@ -577,6 +911,7 @@ function filterCards() {
 function init() {
   setupCheckboxFilters();
   setupBackToTop();
+  setupExportBar();
 
   sourceGroups.forEach((group) => {
     const section = document.createElement("section");
@@ -603,11 +938,7 @@ function init() {
   });
 
   updatePageCount();
-
-  const firstCard = document.querySelector(".template-card");
-  if (firstCard) {
-    firstCard.classList.add("active");
-  }
+  updateSelectionState();
 }
 
 function setupBackToTop() {
