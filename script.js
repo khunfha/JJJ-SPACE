@@ -844,6 +844,9 @@ async function exportSelectedAsImage() {
   ctx.fillStyle = "#fdfdf0";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  ctx.fillStyle = "#fff4f6";
+  ctx.fillRect(0, 0, canvas.width, HEADER_HEIGHT);
+
   const heroTitle = document.querySelector(".hero h1")?.textContent ?? "";
   const heroSubtitle = document.querySelector(".hero p")?.textContent ?? "";
 
