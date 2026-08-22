@@ -884,10 +884,46 @@ async function exportSelectedAsImage() {
     y += titleSpace + cardsHeight + GAP;
   });
 
-  const link = document.createElement("a");
-  link.download = `janjingjingjewel-selected-${Date.now()}.png`;
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+  await saveCanvasAsPng(canvas, `janjingjingjewel-selected-${Date.now()}.png`);
+}
+
+async function saveCanvasAsPng(canvas, filename) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!blob) {
+    throw new Error("Could not generate PNG data from the canvas.");
+  }
+
+  // iPadOS masquerades as "MacIntel" in navigator.platform, so touch support is used to tell it apart from a real Mac.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  // iOS Safari ignores the <a download> attribute entirely, so hand the file to the native
+  // share sheet instead — that's the only reliable way for iOS users to save it to Photos/Files.
+  if (isIOS && navigator.canShare) {
+    const file = new File([blob], filename, { type: "image/png" });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") return; // user cancelled the share sheet
+        console.warn("navigator.share failed, falling back to opening the image:", error);
+      }
+    }
+  }
+
+  const blobUrl = URL.createObjectURL(blob);
+
+  if (isIOS) {
+    // No download attribute support: open the image so the user can long-press "Save Image".
+    window.open(blobUrl, "_blank");
+  } else {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = blobUrl;
+    link.click();
+  }
+
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 }
 
 function filterCards() {
