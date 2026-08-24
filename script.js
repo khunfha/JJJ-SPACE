@@ -743,6 +743,7 @@ async function exportSelectedAsImage() {
   const BORDER_WIDTH = 2;
   const RADIUS = 10 * SCALE;
   const HEADER_HEIGHT = 70;
+  const HEADER_BOTTOM_GAP = 10; // Gap between header background and first title
   const TITLE_BASE_FONT_SIZE = 10;
   const TITLE_MIN_FONT_SIZE = 6;
   const TITLE_MAX_LINES = 5;
@@ -868,12 +869,16 @@ async function exportSelectedAsImage() {
 
   ctx.textAlign = "left";
 
-  let y = HEADER_HEIGHT;
+  let y = HEADER_HEIGHT + HEADER_BOTTOM_GAP;
   rows.forEach((row) => {
     const titleSpace = Math.max(0, ...row.map((item) => item.titleHeight || 0));
     const cardsHeight = Math.max(...row.map((item) => item.height));
-    let x = PADDING;
-
+    // Calculate total row width and center it
+    const rowWidth = row.reduce((sum, item, idx) => sum + item.width + (idx > 0 ? GAP : 0), 0);
+    const rowStartX = (CANVAS_WIDTH - rowWidth) / 2;
+    
+    let x = rowStartX;
+    
     row.forEach((item) => {
       if (item.titleLines) {
         ctx.fillStyle = "#ca3e52";
