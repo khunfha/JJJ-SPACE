@@ -270,6 +270,13 @@ const sourceGroups = [
       "12-c-jjj-secret.png",
     ],
   },
+  {
+    folder: "gemm house",
+    title: "GEMM HOUSE JEWEL ROLL CAKE Pop-Up Card",
+    files: [
+      "13-rc-jewel.png",
+    ],
+  },
 ];
 
 const galleryGroups = document.getElementById("galleryGroups");
