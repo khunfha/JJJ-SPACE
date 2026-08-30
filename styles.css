@@ -175,7 +175,7 @@ body {
   width: fit-content;
   max-width: min(1200px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 10px 20px;
+  padding: 8px 14px;
   background: #ffffff;
   border: 1px solid #f0e0e5;
   border-radius: 999px;
