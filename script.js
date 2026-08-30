@@ -583,7 +583,7 @@ function updateSelectionState() {
   }
   if (exportBtn) {
     exportBtn.disabled = selectedCards.length === 0;
-    exportBtn.textContent = `Export Selected (PNG)${selectedCards.length ? ` \u2022 ${selectedCards.length}` : ""}`;
+    exportBtn.textContent = `Export ${selectedCards.length ? ` \u2022 ${selectedCards.length}` : ""}`;
   }
 }
 
