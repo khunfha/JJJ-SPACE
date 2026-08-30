@@ -544,7 +544,7 @@ body {
 .template-card.secret img,
 .template-card[data-tags*="SUPER RARE"] img,
 .template-card[data-tags*="SUPER SECRET RARE"] img {
-  border-color: #ca3e52;
+  border-color: #ffc600;
 }
 
 .template-card.selected {
