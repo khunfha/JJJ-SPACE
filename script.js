@@ -558,6 +558,19 @@ function updatePageCount() {
   if (pageCount) {
     pageCount.textContent = `${visibleCards.length} photocards`;
   }
+
+  const normalCountEl = document.querySelector('[data-rarity-count="normal"]');
+  const secretCountEl = document.querySelector('[data-rarity-count="secret"]');
+  if (!normalCountEl || !secretCountEl) return;
+
+  const normalCount = visibleCards.filter((card) => {
+    const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
+    return !tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
+  }).length;
+
+  const secretCount = visibleCards.length - normalCount;
+  normalCountEl.textContent = normalCount;
+  secretCountEl.textContent = secretCount;
 }
 
 function updateSelectionState() {
@@ -630,6 +643,10 @@ function drawCardOntoCanvas(ctx, image, x, y, imgWidth, imgHeight, borderColor, 
   // Border is drawn outside the image box, matching the site's `border: Npx solid` on <img>.
   const contentX = x + borderWidth;
   const contentY = y + borderWidth;
+
+  ctx.fillStyle = "#ffffff";
+  drawRoundedRectPath(ctx, contentX, contentY, imgWidth, imgHeight, radius);
+  ctx.fill();
 
   ctx.save();
   drawRoundedRectPath(ctx, contentX, contentY, imgWidth, imgHeight, radius);
@@ -730,32 +747,47 @@ async function exportSelectedAsImage() {
     })
   );
 
-  // Render at 2x the site's CSS pixel values (img max-height:100px, card max-width:120px)
-  // so the export matches the on-page look at a crisper resolution, while the gap and
-  // border stay at fixed export pixel sizes (8px gap, 2px border) regardless of scale.
-  const SCALE = 2;
-  const CANVAS_WIDTH = 1500;
+  // Render at a higher export resolution for sharper PNG output while preserving the same
+  // proportions and flat pastel styling as the live page.
+  const SCALE = 3;
+  const CANVAS_WIDTH = 1800;
   const PADDING = 32;
-  const CARD_SIZE_FACTOR = 0.72; // 20% larger than the previous 0.6 factor
+  const CARD_SIZE_FACTOR = 0.6;
   const CARD_MAX_WIDTH = 120 * SCALE * CARD_SIZE_FACTOR;
   const CARD_MAX_HEIGHT = 100 * SCALE * CARD_SIZE_FACTOR;
-  const GAP = 8;
+  const HGAP = 10; // Horizontal gap between images
+  const VGAP = 28; // Vertical gap between rows
   const BORDER_WIDTH = 2;
-  const RADIUS = 10 * SCALE;
+  const RADIUS = 5 * SCALE;
   const HEADER_HEIGHT = 70;
-  const HEADER_BOTTOM_GAP = 10; // Gap between header background and first title
-  const TITLE_BASE_FONT_SIZE = 10;
-  const TITLE_MIN_FONT_SIZE = 6;
+  const HEADER_BOTTOM_GAP = 30; // Gap between header background and first title
+  const TITLE_BASE_FONT_SIZE = 12;
+  const TITLE_MIN_FONT_SIZE = 8;
   const TITLE_MAX_LINES = 5;
-  const TITLE_GAP = 6 * SCALE;
-  const FOOTER_HEIGHT = 28;
+  const TITLE_GAP = 4 * SCALE;
+  const FOOTER_HEIGHT = 48;
 
   const contentWidth = CANVAS_WIDTH - PADDING * 2;
+  const EXPORT_COLORS = {
+    page: "#fff8f9",
+    panel: "#ffffff",
+    panelSoft: "#ffffff",
+    pink: "#ca3e52",
+    pinkDeep: "#b73448",
+    pinkSoft: "#ffe9ee",
+    roseBorder: "#f0e0e5",
+    text: "#3f2d32",
+    textMuted: "#5a606b",
+    gold: "#ca3e52",
+    green: "#4caf50",
+  };
 
   // Create the canvas up front so its context can measure/wrap title text before final sizing.
   const canvas = document.createElement("canvas");
   canvas.width = CANVAS_WIDTH;
   const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // Build one continuous list of cards (across all folders) so images can share a row;
   // only line width determines wrapping, not folder boundaries. Each folder's first card
@@ -798,14 +830,14 @@ async function exportSelectedAsImage() {
   let currentRowWidth = 0;
 
   items.forEach((item) => {
-    const neededWidth = item.width + (currentRow.length > 0 ? GAP : 0);
+    const neededWidth = item.width + (currentRow.length > 0 ? HGAP : 0);
     if (currentRow.length > 0 && currentRowWidth + neededWidth > contentWidth) {
       rows.push(currentRow);
       currentRow = [];
       currentRowWidth = 0;
     }
     currentRow.push(item);
-    currentRowWidth += item.width + (currentRow.length > 1 ? GAP : 0);
+    currentRowWidth += item.width + (currentRow.length > 1 ? HGAP : 0);
   });
   if (currentRow.length > 0) {
     rows.push(currentRow);
@@ -819,7 +851,7 @@ async function exportSelectedAsImage() {
 
       let fitWidth = item.width;
       for (let next = index + 1; next < row.length && row[next].groupIndex === item.groupIndex; next += 1) {
-        fitWidth += GAP + row[next].width;
+        fitWidth += HGAP + row[next].width;
       }
 
       const { fontSize, lines } = fitTitleToWidth(
@@ -835,7 +867,7 @@ async function exportSelectedAsImage() {
       item.titleLines = lines;
       item.titleFontSize = fontSize;
       item.titleLineHeight = lineHeight;
-      item.titleHeight = lines.length * lineHeight + TITLE_GAP;
+      item.titleHeight = lines.length * lineHeight + TITLE_GAP + 6;
     });
   });
 
@@ -844,28 +876,32 @@ async function exportSelectedAsImage() {
     rows.reduce((sum, row) => {
       const titleSpace = Math.max(0, ...row.map((item) => item.titleHeight || 0));
       const cardsHeight = Math.max(...row.map((item) => item.height));
-      return sum + titleSpace + cardsHeight + GAP;
+      return sum + titleSpace + cardsHeight + VGAP;
     }, 0) +
     FOOTER_HEIGHT;
   canvas.height = totalHeight;
 
-  ctx.fillStyle = "#fdfdf0";
+  ctx.fillStyle = "#fff8f9";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "#fff4f6";
-  ctx.fillRect(0, 0, canvas.width, HEADER_HEIGHT);
+  drawRoundedRectPath(ctx, 24, 12, canvas.width - 48, HEADER_HEIGHT - 8, 30);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#f0e0e5";
+  ctx.stroke();
 
   const heroTitle = document.querySelector(".hero h1")?.textContent ?? "";
   const heroSubtitle = document.querySelector(".hero p")?.textContent ?? "";
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#ca3e52";
+  ctx.fillStyle = EXPORT_COLORS.pink;
   ctx.font = "700 24px 'Noto Sans Thai', sans-serif";
-  ctx.fillText(heroTitle, canvas.width / 2, 34);
+  ctx.fillText(heroTitle, canvas.width / 2, 38);
 
   ctx.font = "400 13px 'Noto Sans Thai', sans-serif";
-  ctx.fillStyle = "#4b5563";
-  ctx.fillText(heroSubtitle, canvas.width / 2, 56);
+  ctx.fillStyle = EXPORT_COLORS.textMuted;
+  ctx.fillText(heroSubtitle, canvas.width / 2, 60);
 
   ctx.textAlign = "left";
 
@@ -873,15 +909,24 @@ async function exportSelectedAsImage() {
   rows.forEach((row) => {
     const titleSpace = Math.max(0, ...row.map((item) => item.titleHeight || 0));
     const cardsHeight = Math.max(...row.map((item) => item.height));
-    // Calculate total row width and center it
-    const rowWidth = row.reduce((sum, item, idx) => sum + item.width + (idx > 0 ? GAP : 0), 0);
+    const rowWidth = row.reduce((sum, item, idx) => sum + item.width + (idx > 0 ? HGAP : 0), 0);
     const rowStartX = (CANVAS_WIDTH - rowWidth) / 2;
-    
+    const rowBoxX = rowStartX - 28;
+    const rowBoxY = y - 18;
+    const rowBoxW = rowWidth + 56;
+    const rowBoxH = titleSpace - 6;
+
+    ctx.fillStyle = "#fff8f9";
+    ctx.fillRect(rowBoxX, rowBoxY, rowBoxW, rowBoxH);
+    ctx.lineWidth = 0;
+    ctx.strokeStyle = "transparent";
+    ctx.stroke();
+
     let x = rowStartX;
-    
+
     row.forEach((item) => {
       if (item.titleLines) {
-        ctx.fillStyle = "#ca3e52";
+        ctx.fillStyle = EXPORT_COLORS.pink;
         ctx.font = `700 ${item.titleFontSize}px 'Noto Sans Thai', sans-serif`;
         item.titleLines.forEach((line, index) => {
           ctx.fillText(line, x, y + index * item.titleLineHeight + item.titleLineHeight * 0.8);
@@ -890,10 +935,10 @@ async function exportSelectedAsImage() {
 
       const cardY = y + titleSpace + (cardsHeight - item.height) / 2;
       drawCardOntoCanvas(ctx, item.image, x, cardY, item.imgWidth, item.imgHeight, item.borderColor, BORDER_WIDTH, RADIUS);
-      x += item.width + GAP;
+      x += item.width + HGAP;
     });
 
-    y += titleSpace + cardsHeight + GAP;
+    y += titleSpace + cardsHeight + VGAP;
   });
 
   await saveCanvasAsPng(canvas, `janjingjingjewel-selected-${Date.now()}.png`);
