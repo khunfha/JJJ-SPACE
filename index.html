@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
@@ -20,7 +20,7 @@
         <div class="page-count" id="pageCount" aria-live="polite">0 photocards</div>
         <div class="rarity-legend" aria-label="Rarity color legend">
           <span class="rarity-item">
-            <span class="rarity-swatch rarity-normal"></span>
+            <span class="rarity-swatch"></span>
             <span>Normal</span>
             <span class="rarity-count" data-rarity-count="normal">0</span>
           </span>
@@ -35,8 +35,8 @@
       <section class="builder">
         <div class="filter-row">
           <div class="filter-title">Choose your J</div>
-          <div class="filter-dropdown" id="categoryFilterDropdown">
-            <button type="button" class="filter-dropdown-toggle" id="categoryFilterToggle" aria-haspopup="true" aria-expanded="false">
+          <div class="filter-dropdown">
+            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
               <span class="filter-dropdown-label">All</span>
               <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
             </button>
@@ -45,8 +45,8 @@
         </div>
         <div class="filter-row">
           <div class="filter-title">Rarity</div>
-          <div class="filter-dropdown" id="rarityFilterDropdown">
-            <button type="button" class="filter-dropdown-toggle" id="rarityFilterToggle" aria-haspopup="true" aria-expanded="false">
+          <div class="filter-dropdown">
+            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
               <span class="filter-dropdown-label">All</span>
               <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
             </button>
@@ -55,8 +55,8 @@
         </div>
         <div class="filter-row">
           <div class="filter-title">Collections</div>
-          <div class="filter-dropdown" id="folderFilterDropdown">
-            <button type="button" class="filter-dropdown-toggle" id="folderFilterToggle" aria-haspopup="true" aria-expanded="false">
+          <div class="filter-dropdown">
+            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
               <span class="filter-dropdown-label">All</span>
               <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
             </button>
