@@ -750,16 +750,16 @@ async function exportSelectedAsImage() {
   // Render at a higher export resolution for sharper PNG output while preserving the same
   // proportions and flat pastel styling as the live page.
   const SCALE = 3;
-  const CANVAS_WIDTH = 1800;
+  const CANVAS_WIDTH = 1600;
   const PADDING = 32;
-  const CARD_SIZE_FACTOR = 0.6;
+  const CARD_SIZE_FACTOR = 0.54;
   const CARD_MAX_WIDTH = 120 * SCALE * CARD_SIZE_FACTOR;
   const CARD_MAX_HEIGHT = 100 * SCALE * CARD_SIZE_FACTOR;
   const HGAP = 10; // Horizontal gap between images
   const VGAP = 28; // Vertical gap between rows
   const BORDER_WIDTH = 2;
   const RADIUS = 5 * SCALE;
-  const HEADER_HEIGHT = 70;
+  const HEADER_HEIGHT = 88;
   const HEADER_BOTTOM_GAP = 30; // Gap between header background and first title
   const TITLE_BASE_FONT_SIZE = 12;
   const TITLE_MIN_FONT_SIZE = 8;
@@ -771,15 +771,10 @@ async function exportSelectedAsImage() {
   const EXPORT_COLORS = {
     page: "#fff8f9",
     panel: "#ffffff",
-    panelSoft: "#ffffff",
-    pink: "#ca3e52",
-    pinkDeep: "#b73448",
-    pinkSoft: "#ffe9ee",
+    pink: "#c83d55",
+    pinkDeep: "#b72e46",
     roseBorder: "#f0e0e5",
-    text: "#3f2d32",
-    textMuted: "#5a606b",
-    gold: "#ca3e52",
-    green: "#4caf50",
+    textMuted: "#5f6673",
   };
 
   // Create the canvas up front so its context can measure/wrap title text before final sizing.
@@ -881,27 +876,25 @@ async function exportSelectedAsImage() {
     FOOTER_HEIGHT;
   canvas.height = totalHeight;
 
-  ctx.fillStyle = "#fff8f9";
+  ctx.fillStyle = EXPORT_COLORS.page;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  drawRoundedRectPath(ctx, 24, 12, canvas.width - 48, HEADER_HEIGHT - 8, 30);
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "#f0e0e5";
-  ctx.stroke();
+  ctx.fillStyle = EXPORT_COLORS.panel;
+  ctx.fillRect(0, 0, canvas.width, HEADER_HEIGHT);
+  ctx.fillStyle = EXPORT_COLORS.roseBorder;
+  ctx.fillRect(0, HEADER_HEIGHT - 2, canvas.width, 2);
 
   const heroTitle = document.querySelector(".hero h1")?.textContent ?? "";
   const heroSubtitle = document.querySelector(".hero p")?.textContent ?? "";
 
   ctx.textAlign = "center";
-  ctx.fillStyle = EXPORT_COLORS.pink;
+  ctx.fillStyle = EXPORT_COLORS.pinkDeep;
   ctx.font = "700 24px 'Noto Sans Thai', sans-serif";
-  ctx.fillText(heroTitle, canvas.width / 2, 38);
+  ctx.fillText(heroTitle, canvas.width / 2, 42);
 
   ctx.font = "400 13px 'Noto Sans Thai', sans-serif";
   ctx.fillStyle = EXPORT_COLORS.textMuted;
-  ctx.fillText(heroSubtitle, canvas.width / 2, 60);
+  ctx.fillText(heroSubtitle, canvas.width / 2, 66);
 
   ctx.textAlign = "left";
 
@@ -911,16 +904,6 @@ async function exportSelectedAsImage() {
     const cardsHeight = Math.max(...row.map((item) => item.height));
     const rowWidth = row.reduce((sum, item, idx) => sum + item.width + (idx > 0 ? HGAP : 0), 0);
     const rowStartX = (CANVAS_WIDTH - rowWidth) / 2;
-    const rowBoxX = rowStartX - 28;
-    const rowBoxY = y - 18;
-    const rowBoxW = rowWidth + 56;
-    const rowBoxH = titleSpace - 6;
-
-    ctx.fillStyle = "#fff8f9";
-    ctx.fillRect(rowBoxX, rowBoxY, rowBoxW, rowBoxH);
-    ctx.lineWidth = 0;
-    ctx.strokeStyle = "transparent";
-    ctx.stroke();
 
     let x = rowStartX;
 
@@ -941,14 +924,47 @@ async function exportSelectedAsImage() {
     y += titleSpace + cardsHeight + VGAP;
   });
 
-  await saveCanvasAsPng(canvas, `janjingjingjewel-selected-${Date.now()}.png`);
+  await saveCanvasAsPng(canvas, `JJJ-PCs-list-${Date.now()}.png`, 80);
 }
 
-async function saveCanvasAsPng(canvas, filename) {
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-  if (!blob) {
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  bytes.forEach((byte) => {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  });
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+async function setPngDpi(blob, dpi) {
+  const png = new Uint8Array(await blob.arrayBuffer());
+  const pixelsPerMeter = Math.round(dpi / 0.0254);
+  const chunkData = new Uint8Array(9);
+  const chunkDataView = new DataView(chunkData.buffer);
+  chunkDataView.setUint32(0, pixelsPerMeter);
+  chunkDataView.setUint32(4, pixelsPerMeter);
+  chunkData[8] = 1;
+
+  const chunk = new Uint8Array(21);
+  const chunkView = new DataView(chunk.buffer);
+  const type = new TextEncoder().encode("pHYs");
+  chunkView.setUint32(0, chunkData.length);
+  chunk.set(type, 4);
+  chunk.set(chunkData, 8);
+  chunkView.setUint32(17, crc32(chunk.slice(4, 17)));
+
+  return new Blob([png.slice(0, 33), chunk, png.slice(33)], { type: "image/png" });
+}
+
+async function saveCanvasAsPng(canvas, filename, dpi) {
+  const canvasBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!canvasBlob) {
     throw new Error("Could not generate PNG data from the canvas.");
   }
+
+  const blob = await setPngDpi(canvasBlob, dpi);
 
   // iPadOS masquerades as "MacIntel" in navigator.platform, so touch support is used to tell it apart from a real Mac.
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
