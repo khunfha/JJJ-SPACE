@@ -11,9 +11,8 @@
   --text-soft: #694139;
   --text-muted: #5f6673;
   --green: #9abe74;
-  --radius-xl: 30px;
+  --export-bar-clearance: 112px;
   --radius-lg: 22px;
-  --radius-md: 16px;
   --radius-sm: 12px;
 }
 
@@ -48,12 +47,7 @@ body {
   position: relative;
   overflow: hidden;
   background: #ffffff;
-  border-top: 0;
   border-bottom: 2px solid #f0e0e5;
-  border-left: 0;
-  border-right: 0;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .page-count-wrap {
@@ -120,12 +114,6 @@ body {
   border-radius: 50%;
   display: inline-block;
   border: 2px solid #ca3e52;
-  background: #ca3e52;
-  box-shadow: none;
-}
-
-.rarity-normal {
-  border-color: #ca3e52;
   background: #ca3e52;
 }
 
@@ -243,10 +231,6 @@ body {
 
 .gallery {
   flex-basis: 100%;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
   margin-bottom: 6px;
 }
 
@@ -262,16 +246,11 @@ body {
 .site-footer {
   width: 100%;
   margin-top: 24px;
-  padding: 20px 16px 85px;
+  padding: 20px 16px calc(var(--export-bar-clearance) + env(safe-area-inset-bottom));
   background: #ffffff;
   border-top: 2px solid #f0e0e5;
-  border-bottom: 0;
-  border-left: 0;
-  border-right: 0;
-  border-radius: 0;
   color: var(--text-muted);
   text-align: center;
-  box-shadow: none;
 }
 
 .footer-content {
@@ -279,11 +258,6 @@ body {
   margin: 0 auto;
   font-size: 0.68rem;
   line-height: 1.6;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
 }
 
 .footer-content p {
@@ -425,6 +399,13 @@ body {
   display: flex;
 }
 
+.filter-dropdown:has(#folderFilter).open .filter-options {
+  position: relative;
+  top: auto;
+  width: 100%;
+  margin-top: 6px;
+}
+
 .filter-clear-btn {
   padding: 4px 10px;
   border: 1px solid #f0e0e5;
@@ -553,7 +534,6 @@ body {
 
 .template-card.selected img {
   outline: 3px solid var(--green);
-  outline-offset: 0px;
 }
 
 .template-card.selected::after {
@@ -582,5 +562,11 @@ body {
 @media (max-width: 900px) {
   .builder {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --export-bar-clearance: 140px;
   }
 }
