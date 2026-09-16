@@ -532,6 +532,11 @@ body {
   border-color: #ffc600;
 }
 
+.template-card.nft img,
+.template-card[data-tags*="NFT Card"] img, {
+  border-color: #6f4630;
+}
+
 .template-card.selected {
   overflow: visible;
 }
