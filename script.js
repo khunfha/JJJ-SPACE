@@ -278,6 +278,34 @@ const sourceGroups = [
       "13-rc-jewel.png",
     ],
   },
+  {
+    folder: "fanival 2026",
+    title: "Girls Selfie Candy Wink Collectible Random Card",
+    files: [
+      "14-c-j1.png",
+      "14-c-j2.png",
+      "14-c-j3.png",
+      "14-c-jj1.png",
+      "14-c-jj2.png",
+      "14-c-jj3.png",
+      "14-c-jjj-secret.png",
+    ],
+  },
+  {
+    folder: "fanival 2026",
+    title: "Hotshot Series Exclusive Photocard Set",
+    files: [
+      "14-h-j1.png",
+      "14-h-j2.png",
+      "14-h-j3.png",
+      "14-h-jj1.png",
+      "14-h-jj2.png",
+      "14-h-jj3.png",
+      "14-h-jjj1.png",
+      "14-h-jjj2.png",
+      "14-h-jjj3.png",
+    ],
+  },
 ];
 
 const galleryGroups = document.getElementById("galleryGroups");
