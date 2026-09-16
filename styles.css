@@ -122,6 +122,11 @@ body {
   background: #ffc600;
 }
 
+.rarity-nft {
+  border-color: #6f4630;
+  background: #6f4630;
+}
+
 .hero h1 {
   margin: 0;
   font-size: clamp(1.7rem, 3vw, 2.5rem);
@@ -533,7 +538,7 @@ body {
 }
 
 .template-card.nft img,
-.template-card[data-tags*="NFT Card"] img, {
+.template-card[data-tags*="NFT Card"] img {
   border-color: #6f4630;
 }
 
