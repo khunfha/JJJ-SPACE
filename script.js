@@ -483,11 +483,14 @@ function createTemplateCard(src, alt, fileName) {
   const isSecret = /-secret(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
   const isSuperSecretRare = /-ssr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
   const isSuperRare = /-sr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
+  const isNFT = /-sr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
 
   if (isSuperSecretRare) {
     tags.push("SUPER SECRET RARE");
   } else if (isSuperRare) {
     tags.push("SUPER RARE");
+  } else if (isNFT) {
+    tags.push("NFT Card");
   }
 
   let categoryTag = null;
