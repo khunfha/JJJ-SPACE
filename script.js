@@ -294,7 +294,7 @@ const categoryFilterIcons = {
   JANJINGJING: "./source/header/janjingjing.png",
   JJJ: "./source/header/jjj.png",
 };
-const rarityFilterTags = ["NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE"];
+const rarityFilterTags = ["NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"];
 const filterFolders = [...new Set(sourceGroups.map((group) => group.title))];
 let activeCategoryFilters = [...categoryFilterTags];
 let activeRarityFilters = [...rarityFilterTags];
@@ -483,7 +483,7 @@ function createTemplateCard(src, alt, fileName) {
   const isSecret = /-secret(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
   const isSuperSecretRare = /-ssr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
   const isSuperRare = /-sr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
-  const isNFT = /-sr(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
+  const isNFT = /nft/i.test(lowerFileName);
 
   if (isSuperSecretRare) {
     tags.push("SUPER SECRET RARE");
@@ -565,16 +565,22 @@ function updatePageCount() {
 
   const normalCountEl = document.querySelector('[data-rarity-count="normal"]');
   const secretCountEl = document.querySelector('[data-rarity-count="secret"]');
-  if (!normalCountEl || !secretCountEl) return;
+  const nftCountEl = document.querySelector('[data-rarity-count="nft"]');
+  if (!normalCountEl || !secretCountEl || !nftCountEl) return;
 
   const normalCount = visibleCards.filter((card) => {
     const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
-    return !tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
+    return !tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"].includes(tag));
   }).length;
 
-  const secretCount = visibleCards.length - normalCount;
+  const nftCount = visibleCards.filter((card) => card.dataset.tags?.split(",").includes("NFT Card")).length;
+  const secretCount = visibleCards.filter((card) => {
+    const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
+    return tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
+  }).length;
   normalCountEl.textContent = normalCount;
   secretCountEl.textContent = secretCount;
+  nftCountEl.textContent = nftCount;
 }
 
 function updateSelectionState() {
@@ -1008,7 +1014,7 @@ function filterCards() {
     const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
     const categoryMatch = tags.some((tag) => activeCategoryFilters.includes(tag));
 
-    const hasRarityTag = tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
+    const hasRarityTag = tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"].includes(tag));
     const rarityMatch = (activeRarityFilters.includes("NORMAL") && !hasRarityTag) ||
       tags.some((tag) => activeRarityFilters.includes(tag));
 
