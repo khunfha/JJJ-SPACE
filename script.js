@@ -833,7 +833,8 @@ async function exportSelectedAsImage() {
       const image = loadedImages.get(img.src);
       const tags = card.dataset.tags || "";
       const isRareColor = card.classList.contains("secret") || tags.includes("SUPER RARE") || tags.includes("SUPER SECRET RARE");
-      const borderColor = isRareColor ? "#ffc600" : "#ca3e52";
+      const isNFT = tags.includes("NFT Card");
+      const borderColor = isRareColor ? "#ffc600" : isNFT ? "#6f4630" : "#ca3e52";
 
       let imgWidth = CARD_MAX_WIDTH;
       let imgHeight = CARD_MAX_HEIGHT;
