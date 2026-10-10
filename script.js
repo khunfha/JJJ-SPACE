@@ -306,6 +306,40 @@ const sourceGroups = [
       "14-h-jjj3.png",
     ],
   },
+  {
+    folder: "pop-up hong kong 2026",
+    title: "GMMTV POP-UP STORE IN HONG KONG 2026 Girls Random Card",
+    files: [
+      "15-c-j1.png",
+      "15-c-j2.png",
+      "15-c-j3.png",
+      "15-c-jj1.png",
+      "15-c-jj2.png",
+      "15-c-jj3.png",
+      "15-c-jjj-secret.png",
+    ],
+  },
+  {
+    folder: "pop-up malaysia 2026",
+    title: "GMMTV POP-UP STORE IN MALAYSIA 2026 Girls Random Card",
+    files: [
+      "16-c-j1.png",
+      "16-c-j2.png",
+      "16-c-j3.png",
+      "16-c-jj1.png",
+      "16-c-jj2.png",
+      "16-c-jj3.png",
+      "16-c-j-secret.png",
+      "16-c-jj-secret.png",
+    ],
+  },
+  {
+    folder: "pop-up malaysia 2026",
+    title: "GMMTV POP-UP STORE IN MALAYSIA 2026 GMMTV Fandom Character Random Card Transparent Card Set",
+    files: [
+      "16-jewel-1.png",
+    ],
+  },
 ];
 
 const galleryGroups = document.getElementById("galleryGroups");
