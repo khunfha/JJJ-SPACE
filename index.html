@@ -58,16 +58,16 @@
             <div class="filter-options" id="rarityFilter" aria-label="Rarity"></div>
           </div>
         </div>
-        <div class="filter-row">
-          <div class="filter-title">Collections</div>
-          <div class="filter-dropdown">
-            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-              <span class="filter-dropdown-label">All</span>
-              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
+        <section class="collection-filter collapsed" id="collectionFilter" aria-label="Collections filter">
+          <div class="collection-filter-header">
+            <button type="button" class="collection-filter-toggle" id="collectionsExpanded" aria-label="Expand collections" aria-controls="folderFilter" aria-expanded="false">
+              <span class="collection-filter-arrow" aria-hidden="true">&#9656;</span>
+              <span>Collections</span>
             </button>
-            <div class="filter-options" id="folderFilter" aria-label="Collections"></div>
+            <span class="collection-filter-count" id="collectionFilterCount" aria-live="polite"></span>
           </div>
-        </div>
+          <div class="collection-options filter-options" id="folderFilter" aria-label="Collections"></div>
+        </section>
         <div class="gallery" id="galleryGroups"></div>
       </section>
     </main>
