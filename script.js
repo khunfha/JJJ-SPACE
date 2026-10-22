@@ -380,20 +380,25 @@ function syncCheckboxGroup(container, selectedValues) {
 
 function updateDropdownLabel(container, selectedValues) {
   const dropdown = container.closest(".filter-dropdown");
-  if (!dropdown) return;
-
-  const labelEl = dropdown.querySelector(".filter-dropdown-label");
-  if (!labelEl) return;
-
   const normalized = normalizeCheckboxValues(selectedValues);
-  const totalOptions = container.querySelectorAll('input[type="checkbox"]').length;
-  labelEl.textContent = normalized.length === 0
+  const totalOptions = container.querySelectorAll('input[type="checkbox"][data-option="true"]').length;
+  const labelText = normalized.length === 0
     ? "None"
     : normalized.length === totalOptions
       ? "All"
       : normalized.length === 1
         ? normalized[0]
         : `${normalized.length} selected`;
+
+  if (dropdown) {
+    const labelEl = dropdown.querySelector(".filter-dropdown-label");
+    if (labelEl) labelEl.textContent = labelText;
+  }
+
+  if (container.id === "folderFilter") {
+    const countEl = document.getElementById("collectionFilterCount");
+    if (countEl) countEl.textContent = `${normalized.length} of ${totalOptions} selected`;
+  }
 }
 
 function closeAllDropdowns(except) {
@@ -430,7 +435,6 @@ function setupDropdownToggles() {
 function createCheckboxFilterGroup(container, options, selectedValues, onChange, config = {}) {
   const { selectAllLabel, icons } = config;
   container.innerHTML = "";
-  updateDropdownLabel(container, selectedValues);
 
   const createIcon = (optionValue) => {
     const iconSrc = icons && icons[optionValue];
@@ -527,6 +531,7 @@ function createCheckboxFilterGroup(container, options, selectedValues, onChange,
     label.appendChild(text);
     container.appendChild(label);
   });
+  updateDropdownLabel(container, selectedValues);
 }
 
 function createTemplateCard(src, alt, fileName) {
@@ -538,6 +543,9 @@ function createTemplateCard(src, alt, fileName) {
   const img = document.createElement("img");
   img.src = src;
   img.alt = alt;
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.fetchPriority = "low";
   card.appendChild(img);
 
   const lowerFileName = fileName.toLowerCase();
@@ -603,6 +611,17 @@ function createTemplateCard(src, alt, fileName) {
 function setupCheckboxFilters() {
   setupDropdownToggles();
 
+  const collectionsExpanded = document.getElementById("collectionsExpanded");
+  const collectionFilter = document.getElementById("collectionFilter");
+  if (collectionsExpanded && collectionFilter) {
+    collectionsExpanded.addEventListener("click", () => {
+      const isExpanded = collectionsExpanded.getAttribute("aria-expanded") === "true";
+      collectionFilter.classList.toggle("collapsed", isExpanded);
+      collectionsExpanded.setAttribute("aria-expanded", String(!isExpanded));
+      collectionsExpanded.setAttribute("aria-label", `${isExpanded ? "Expand" : "Collapse"} collections`);
+    });
+  }
+
   createCheckboxFilterGroup(categoryFilterContainer, categoryFilterTags, activeCategoryFilters, (nextValues) => {
     activeCategoryFilters = nextValues;
     filterCards();
@@ -620,26 +639,26 @@ function setupCheckboxFilters() {
 }
 
 function updatePageCount() {
-  const visibleCards = Array.from(document.querySelectorAll(".template-card")).filter((card) => card.style.display !== "none");
-  if (pageCount) {
-    pageCount.textContent = `${visibleCards.length} photocards`;
-  }
+  let visibleCount = 0;
+  let normalCount = 0;
+  let secretCount = 0;
+  let nftCount = 0;
+  document.querySelectorAll(".template-card").forEach((card) => {
+    if (card.style.display === "none") return;
+    visibleCount += 1;
+    const tags = new Set((card.dataset.tags || card.dataset.tag || "NONE").split(","));
+    const isNft = tags.has("NFT Card");
+    const isSecret = tags.has("SECRET") || tags.has("SUPER RARE") || tags.has("SUPER SECRET RARE");
+    if (!isNft && !isSecret) normalCount += 1;
+    if (isNft) nftCount += 1;
+    if (isSecret) secretCount += 1;
+  });
 
+  if (pageCount) pageCount.textContent = `${visibleCount} photocards`;
   const normalCountEl = document.querySelector('[data-rarity-count="normal"]');
   const secretCountEl = document.querySelector('[data-rarity-count="secret"]');
   const nftCountEl = document.querySelector('[data-rarity-count="nft"]');
   if (!normalCountEl || !secretCountEl || !nftCountEl) return;
-
-  const normalCount = visibleCards.filter((card) => {
-    const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
-    return !tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"].includes(tag));
-  }).length;
-
-  const nftCount = visibleCards.filter((card) => card.dataset.tags?.split(",").includes("NFT Card")).length;
-  const secretCount = visibleCards.filter((card) => {
-    const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
-    return tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE"].includes(tag));
-  }).length;
   normalCountEl.textContent = normalCount;
   secretCountEl.textContent = secretCount;
   nftCountEl.textContent = nftCount;
@@ -997,7 +1016,15 @@ async function exportSelectedAsImage() {
     y += titleSpace + cardsHeight + VGAP;
   });
 
-  await saveCanvasAsPng(canvas, `JJJ-PCs-list-${Date.now()}.png`, 80);
+  try {
+    await saveCanvasAsPng(canvas, `JJJ-PCs-list-${Date.now()}.png`, 80);
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+    loadedImages.clear();
+    items.length = 0;
+    rows.length = 0;
+  }
 }
 
 function crc32(bytes) {
@@ -1028,7 +1055,7 @@ async function setPngDpi(blob, dpi) {
   chunk.set(chunkData, 8);
   chunkView.setUint32(17, crc32(chunk.slice(4, 17)));
 
-  return new Blob([png.slice(0, 33), chunk, png.slice(33)], { type: "image/png" });
+  return new Blob([png.subarray(0, 33), chunk, png.subarray(33)], { type: "image/png" });
 }
 
 async function saveCanvasAsPng(canvas, filename, dpi) {
@@ -1073,20 +1100,30 @@ async function saveCanvasAsPng(canvas, filename, dpi) {
 }
 
 function filterCards() {
+  const categoryFilters = new Set(activeCategoryFilters);
+  const rarityFilters = new Set(activeRarityFilters);
+  const folderFilters = new Set(activeFolderFilters);
+  const rarityTags = new Set(["SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"]);
+
   document.querySelectorAll(".template-card").forEach((card) => {
-    const tags = card.dataset.tags ? card.dataset.tags.split(",") : [card.dataset.tag];
-    const categoryMatch = tags.some((tag) => activeCategoryFilters.includes(tag));
+    const tags = (card.dataset.tags || card.dataset.tag || "NONE").split(",");
+    const categoryMatch = tags.some((tag) => categoryFilters.has(tag));
 
-    const hasRarityTag = tags.some((tag) => ["SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"].includes(tag));
-    const rarityMatch = (activeRarityFilters.includes("NORMAL") && !hasRarityTag) ||
-      tags.some((tag) => activeRarityFilters.includes(tag));
+    const hasRarityTag = tags.some((tag) => rarityTags.has(tag));
+    const rarityMatch = (rarityFilters.has("NORMAL") && !hasRarityTag) || tags.some((tag) => rarityFilters.has(tag));
 
-    const folderMatch = activeFolderFilters.includes(card.dataset.folder);
+    const folderMatch = folderFilters.has(card.dataset.folder);
     card.style.display = categoryMatch && rarityMatch && folderMatch ? "inline-flex" : "none";
   });
 
   document.querySelectorAll(".group-section").forEach((section) => {
-    const anyVisible = Array.from(section.querySelectorAll(".template-card")).some((card) => card.style.display !== "none");
+    let anyVisible = false;
+    for (const card of section.querySelectorAll(".template-card")) {
+      if (card.style.display !== "none") {
+        anyVisible = true;
+        break;
+      }
+    }
     section.style.display = anyVisible ? "block" : "none";
   });
 
