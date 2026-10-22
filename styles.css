@@ -326,6 +326,63 @@ body {
   min-width: 0;
 }
 
+.collection-filter {
+  flex: 1 0 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #f0e0e5;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.collection-filter-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.collection-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--pink-deep);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.collection-filter-toggle:hover {
+  color: var(--pink);
+}
+
+.collection-filter-arrow {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.18s ease;
+}
+
+.collection-filter.collapsed .collection-filter-arrow {
+  transform: rotate(0deg);
+}
+
+.collection-filter-count {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .filter-title {
   font-size: 0.85rem;
   font-weight: 600;
@@ -398,6 +455,34 @@ body {
   border: 1px solid #f0e0e5;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(183, 52, 72, 0.08);
+}
+
+.collection-options {
+  position: static;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  width: 100%;
+  max-width: none;
+  max-height: 260px;
+  padding: 4px 0 0;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.collection-filter.collapsed .collection-options {
+  display: none;
+}
+
+.collection-options .filter-actions-row {
+  flex: 0 0 100%;
+}
+
+.collection-options .filter-option {
+  flex: 1 1 280px;
 }
 
 .filter-dropdown.open .filter-options {
