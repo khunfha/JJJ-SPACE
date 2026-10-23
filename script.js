@@ -335,9 +335,22 @@ const sourceGroups = [
   },
   {
     folder: "pop-up malaysia 2026",
-    title: "GMMTV POP-UP STORE IN MALAYSIA 2026 GMMTV Fandom Character Random Card Transparent Card Set",
+    title: "GMMTV Fandom Character Random Card Transparent Card Set",
     files: [
       "16-jewel-1.png",
+    ],
+  },
+  {
+    folder: "pop-up singapore 2026",
+    title: "GMMTV POP-UP STORE IN SINGAPORE 2026 Girls Random Card",
+    files: [
+      "17-c-j1.png",
+      "17-c-j2.png",
+      "17-c-j3.png",
+      "17-c-jj1.png",
+      "17-c-jj2.png",
+      "17-c-jj3.png",
+      "17-c-jjj-secret.png",
     ],
   },
 ];
