@@ -1121,6 +1121,10 @@ body {
 
   .back-to-top {
     right: 14px;
+    bottom: 170px;
+  }
+
+  .scroll-to-bottom {
     bottom: 118px;
   }
 }
