@@ -360,14 +360,12 @@ const pageCount = document.getElementById("pageCount");
 const categoryFilterContainer = document.getElementById("categoryFilter");
 const rarityFilterContainer = document.getElementById("rarityFilter");
 const folderFilterContainer = document.getElementById("folderFilter");
-const filterDropdowns = Array.from(document.querySelectorAll(".filter-dropdown"));
 const categoryFilterTags = ["JAN", "JINGJING", "JANJINGJING", "JEWEL"];
 const categoryFilterIcons = {
   JAN: "./source/header/jan.png",
   JINGJING: "./source/header/jingjing.png",
   JEWEL: "./source/header/jewel.png",
   JANJINGJING: "./source/header/janjingjing.png",
-  JJJ: "./source/header/jjj.png",
 };
 const rarityFilterTags = ["NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"];
 const filterFolders = [...new Set(sourceGroups.map((group) => group.title))];
@@ -388,65 +386,26 @@ function syncCheckboxGroup(container, selectedValues) {
 
   container.querySelectorAll('input[type="checkbox"][data-option="true"]').forEach((input) => {
     input.checked = normalized.includes(input.value);
+    input.closest(".filter-option")?.classList.toggle("selected", input.checked);
+  });
+  container.querySelectorAll('button[data-option="true"]').forEach((button) => {
+    const isSelected = normalized.includes(button.value);
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.classList.toggle("selected", isSelected);
   });
 }
 
-function updateDropdownLabel(container, selectedValues) {
-  const dropdown = container.closest(".filter-dropdown");
+function updateCollectionFilterCount(container, selectedValues) {
+  if (container.id !== "folderFilter") return;
+
   const normalized = normalizeCheckboxValues(selectedValues);
-  const totalOptions = container.querySelectorAll('input[type="checkbox"][data-option="true"]').length;
-  const labelText = normalized.length === 0
-    ? "None"
-    : normalized.length === totalOptions
-      ? "All"
-      : normalized.length === 1
-        ? normalized[0]
-        : `${normalized.length} selected`;
-
-  if (dropdown) {
-    const labelEl = dropdown.querySelector(".filter-dropdown-label");
-    if (labelEl) labelEl.textContent = labelText;
-  }
-
-  if (container.id === "folderFilter") {
-    const countEl = document.getElementById("collectionFilterCount");
-    if (countEl) countEl.textContent = `${normalized.length} of ${totalOptions} selected`;
-  }
-}
-
-function closeAllDropdowns(except) {
-  filterDropdowns.forEach((dropdown) => {
-    if (dropdown !== except) {
-      dropdown.classList.remove("open");
-      const toggle = dropdown.querySelector(".filter-dropdown-toggle");
-      if (toggle) toggle.setAttribute("aria-expanded", "false");
-    }
-  });
-}
-
-function setupDropdownToggles() {
-  filterDropdowns.forEach((dropdown) => {
-    const toggle = dropdown.querySelector(".filter-dropdown-toggle");
-    if (!toggle) return;
-
-    toggle.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const isOpen = dropdown.classList.contains("open");
-      closeAllDropdowns(dropdown);
-      dropdown.classList.toggle("open", !isOpen);
-      toggle.setAttribute("aria-expanded", String(!isOpen));
-    });
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!filterDropdowns.some((dropdown) => dropdown.contains(event.target))) {
-      closeAllDropdowns(null);
-    }
-  });
+  const totalOptions = container.querySelectorAll('[data-option="true"]').length;
+  const countEl = document.getElementById("collectionFilterCount");
+  if (countEl) countEl.textContent = `${normalized.length} of ${totalOptions} selected`;
 }
 
 function createCheckboxFilterGroup(container, options, selectedValues, onChange, config = {}) {
-  const { selectAllLabel, icons } = config;
+  const { icons, chips } = config;
   container.innerHTML = "";
 
   const createIcon = (optionValue) => {
@@ -460,58 +419,41 @@ function createCheckboxFilterGroup(container, options, selectedValues, onChange,
     return icon;
   };
 
-  let selectAllCheckbox = null;
+  if (chips) {
+    const currentValues = normalizeCheckboxValues(selectedValues);
+    const addChip = (value) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-option";
+      button.setAttribute("aria-pressed", String(currentValues.includes(value)));
+      button.dataset.option = "true";
+      button.value = value;
+      button.classList.toggle("selected", button.getAttribute("aria-pressed") === "true");
 
-  if (selectAllLabel) {
-    const label = document.createElement("label");
-    label.className = "filter-option filter-option-select-all";
+      const icon = createIcon(value);
+      const text = document.createElement("span");
+      text.textContent = value;
+      if (icon) button.appendChild(icon);
+      button.appendChild(text);
+      button.addEventListener("click", () => {
+        const selectedValuesNow = normalizeCheckboxValues(
+          Array.from(container.querySelectorAll('button[data-option="true"][aria-pressed="true"]'))
+            .map((selectedButton) => selectedButton.value),
+        );
+        const nextValues = selectedValuesNow.includes(value)
+          ? selectedValuesNow.filter((selectedValue) => selectedValue !== value)
+          : [...selectedValuesNow, value];
+        currentValues.splice(0, currentValues.length, ...normalizeCheckboxValues(nextValues));
+        syncCheckboxGroup(container, currentValues);
+        updateCollectionFilterCount(container, currentValues);
+        onChange(currentValues);
+      });
+      container.appendChild(button);
+    };
 
-    selectAllCheckbox = document.createElement("input");
-    selectAllCheckbox.type = "checkbox";
-    selectAllCheckbox.checked = selectedValues.length === options.length;
-
-    selectAllCheckbox.addEventListener("change", () => {
-      const nextValues = selectAllCheckbox.checked ? [...options] : [];
-      syncCheckboxGroup(container, nextValues);
-      updateDropdownLabel(container, nextValues);
-      onChange(nextValues);
-    });
-
-    const icon = createIcon(selectAllLabel);
-    const text = document.createElement("span");
-    text.textContent = selectAllLabel;
-
-    label.appendChild(selectAllCheckbox);
-    if (icon) label.appendChild(icon);
-    label.appendChild(text);
-    container.appendChild(label);
-  } else {
-    const actionsRow = document.createElement("div");
-    actionsRow.className = "filter-actions-row";
-
-    const selectAllButton = document.createElement("button");
-    selectAllButton.type = "button";
-    selectAllButton.className = "filter-clear-btn";
-    selectAllButton.textContent = "Select All";
-    selectAllButton.addEventListener("click", () => {
-      syncCheckboxGroup(container, options);
-      updateDropdownLabel(container, options);
-      onChange(options);
-    });
-
-    const clearButton = document.createElement("button");
-    clearButton.type = "button";
-    clearButton.className = "filter-clear-btn";
-    clearButton.textContent = "Clear";
-    clearButton.addEventListener("click", () => {
-      syncCheckboxGroup(container, []);
-      updateDropdownLabel(container, []);
-      onChange([]);
-    });
-
-    actionsRow.appendChild(selectAllButton);
-    actionsRow.appendChild(clearButton);
-    container.appendChild(actionsRow);
+    options.forEach(addChip);
+    updateCollectionFilterCount(container, currentValues);
+    return;
   }
 
   options.forEach((optionValue) => {
@@ -523,15 +465,14 @@ function createCheckboxFilterGroup(container, options, selectedValues, onChange,
     checkbox.value = optionValue;
     checkbox.dataset.option = "true";
     checkbox.checked = selectedValues.includes(optionValue);
+    label.classList.toggle("selected", checkbox.checked);
 
     checkbox.addEventListener("change", () => {
+      label.classList.toggle("selected", checkbox.checked);
       const checkedValues = Array.from(container.querySelectorAll('input[type="checkbox"][data-option="true"]:checked')).map((input) => input.value);
       const nextValues = normalizeCheckboxValues(checkedValues);
       syncCheckboxGroup(container, nextValues);
-      updateDropdownLabel(container, nextValues);
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = nextValues.length === options.length;
-      }
+      updateCollectionFilterCount(container, nextValues);
       onChange(nextValues);
     });
 
@@ -544,22 +485,53 @@ function createCheckboxFilterGroup(container, options, selectedValues, onChange,
     label.appendChild(text);
     container.appendChild(label);
   });
-  updateDropdownLabel(container, selectedValues);
+  updateCollectionFilterCount(container, selectedValues);
 }
 
-function createTemplateCard(src, alt, fileName) {
-  const card = document.createElement("button");
-  card.type = "button";
+function setupFilterActions(container, options, selectAllId, clearId, onChange) {
+  const setValues = (values) => {
+    syncCheckboxGroup(container, values);
+    updateCollectionFilterCount(container, values);
+    onChange(values);
+  };
+  const selectAllButton = document.getElementById(selectAllId);
+  const clearButton = document.getElementById(clearId);
+
+  if (selectAllButton) {
+    selectAllButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setValues([...options]);
+    });
+  }
+
+  if (clearButton) {
+    clearButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setValues([]);
+    });
+  }
+}
+
+function createTemplateCard(src, fileName) {
+  const card = document.createElement("article");
   card.className = "template-card";
-  card.dataset.templateId = alt.replace(/[^a-zA-Z0-9]/g, "");
+
+  const selectButton = document.createElement("button");
+  selectButton.type = "button";
+  selectButton.className = "card-select";
+  selectButton.setAttribute("aria-label", "Select photocard");
 
   const img = document.createElement("img");
   img.src = src;
-  img.alt = alt;
+  img.alt = "";
   img.loading = "lazy";
   img.decoding = "async";
   img.fetchPriority = "low";
-  card.appendChild(img);
+  const imageWrap = document.createElement("span");
+  imageWrap.className = "card-image-wrap";
+  imageWrap.appendChild(img);
+  selectButton.appendChild(imageWrap);
+  card.appendChild(selectButton);
 
   const lowerFileName = fileName.toLowerCase();
   const tags = [];
@@ -597,24 +569,16 @@ function createTemplateCard(src, alt, fileName) {
 
   const uniqueTags = [...new Set(tags)];
 
-  if (uniqueTags.length > 0) {
-    const tag = document.createElement("span");
-    tag.className = "template-tag";
-    tag.textContent = uniqueTags[0];
-    card.appendChild(tag);
-    card.dataset.tag = uniqueTags[0];
-    card.dataset.tags = uniqueTags.join(",");
-  } else {
-    card.dataset.tag = "NONE";
-    card.dataset.tags = "NONE";
-  }
+  card.dataset.tag = uniqueTags[0] || "NONE";
+  card.dataset.tags = uniqueTags.length > 0 ? uniqueTags.join(",") : "NONE";
 
   if (isSecret) {
     card.classList.add("secret");
   }
 
-  card.addEventListener("click", () => {
+  selectButton.addEventListener("click", () => {
     card.classList.toggle("selected");
+    selectButton.setAttribute("aria-pressed", String(card.classList.contains("selected")));
     updateSelectionState();
   });
 
@@ -622,25 +586,20 @@ function createTemplateCard(src, alt, fileName) {
 }
 
 function setupCheckboxFilters() {
-  setupDropdownToggles();
-
-  const collectionsExpanded = document.getElementById("collectionsExpanded");
-  const collectionFilter = document.getElementById("collectionFilter");
-  if (collectionsExpanded && collectionFilter) {
-    collectionsExpanded.addEventListener("click", () => {
-      const isExpanded = collectionsExpanded.getAttribute("aria-expanded") === "true";
-      collectionFilter.classList.toggle("collapsed", isExpanded);
-      collectionsExpanded.setAttribute("aria-expanded", String(!isExpanded));
-      collectionsExpanded.setAttribute("aria-label", `${isExpanded ? "Expand" : "Collapse"} collections`);
-    });
-  }
-
   createCheckboxFilterGroup(categoryFilterContainer, categoryFilterTags, activeCategoryFilters, (nextValues) => {
     activeCategoryFilters = nextValues;
     filterCards();
-  }, { selectAllLabel: "JJJ", icons: categoryFilterIcons });
+  }, { icons: categoryFilterIcons, chips: true });
+  setupFilterActions(categoryFilterContainer, categoryFilterTags, "categorySelectAll", "categoryClear", (nextValues) => {
+    activeCategoryFilters = nextValues;
+    filterCards();
+  });
 
   createCheckboxFilterGroup(rarityFilterContainer, rarityFilterTags, activeRarityFilters, (nextValues) => {
+    activeRarityFilters = nextValues;
+    filterCards();
+  }, { chips: true });
+  setupFilterActions(rarityFilterContainer, rarityFilterTags, "raritySelectAll", "rarityClear", (nextValues) => {
     activeRarityFilters = nextValues;
     filterCards();
   });
@@ -648,6 +607,42 @@ function setupCheckboxFilters() {
   createCheckboxFilterGroup(folderFilterContainer, filterFolders, activeFolderFilters, (nextValues) => {
     activeFolderFilters = nextValues;
     filterCards();
+  });
+  setupFilterActions(folderFilterContainer, filterFolders, "folderSelectAll", "folderClear", (nextValues) => {
+    activeFolderFilters = nextValues;
+    filterCards();
+  });
+}
+
+function setupFilterSidebar() {
+  const sidebar = document.getElementById("filterSidebar");
+  const toggle = document.getElementById("filterSidebarToggle");
+  const close = document.getElementById("filterSidebarClose");
+  const backdrop = document.getElementById("filterSidebarBackdrop");
+  if (!sidebar || !toggle || !close || !backdrop) return;
+
+  const setOpen = (isOpen) => {
+    sidebar.classList.toggle("open", isOpen);
+    sidebar.setAttribute("aria-hidden", String(!isOpen));
+    sidebar.inert = !isOpen;
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    backdrop.hidden = !isOpen;
+    document.body.classList.toggle("filter-sidebar-open", isOpen);
+
+    if (isOpen) {
+      close.focus();
+    } else {
+      toggle.focus();
+    }
+  };
+
+  toggle.addEventListener("click", () => setOpen(true));
+  close.addEventListener("click", () => setOpen(false));
+  backdrop.addEventListener("click", () => setOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && sidebar.classList.contains("open")) {
+      setOpen(false);
+    }
   });
 }
 
@@ -667,7 +662,7 @@ function updatePageCount() {
     if (isSecret) secretCount += 1;
   });
 
-  if (pageCount) pageCount.textContent = `${visibleCount} photocards`;
+  if (pageCount) pageCount.textContent = visibleCount;
   const normalCountEl = document.querySelector('[data-rarity-count="normal"]');
   const secretCountEl = document.querySelector('[data-rarity-count="secret"]');
   const nftCountEl = document.querySelector('[data-rarity-count="nft"]');
@@ -685,6 +680,10 @@ function updateSelectionState() {
   if (selectionCount) {
     selectionCount.textContent = `${selectedCards.length} selected`;
   }
+  document.querySelectorAll(".template-card").forEach((card) => {
+    const selectButton = card.querySelector(".card-select");
+    if (selectButton) selectButton.setAttribute("aria-pressed", String(card.classList.contains("selected")));
+  });
   if (exportBtn) {
     exportBtn.disabled = selectedCards.length === 0;
     exportBtn.textContent = `Export ${selectedCards.length ? ` \u2022 ${selectedCards.length}` : ""}`;
@@ -701,6 +700,8 @@ function setupExportBar() {
       document.querySelectorAll(".template-card").forEach((card) => {
         if (card.style.display !== "none") {
           card.classList.add("selected");
+          const selectButton = card.querySelector(".card-select");
+          if (selectButton) selectButton.setAttribute("aria-pressed", "true");
         }
       });
       updateSelectionState();
@@ -709,7 +710,11 @@ function setupExportBar() {
 
   if (clearSelectionBtn) {
     clearSelectionBtn.addEventListener("click", () => {
-      document.querySelectorAll(".template-card.selected").forEach((card) => card.classList.remove("selected"));
+      document.querySelectorAll(".template-card.selected").forEach((card) => {
+        card.classList.remove("selected");
+        const selectButton = card.querySelector(".card-select");
+        if (selectButton) selectButton.setAttribute("aria-pressed", "false");
+      });
       updateSelectionState();
     });
   }
@@ -748,7 +753,7 @@ function drawCardOntoCanvas(ctx, image, x, y, imgWidth, imgHeight, borderColor, 
   const contentX = x + borderWidth;
   const contentY = y + borderWidth;
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#fff7e6";
   drawRoundedRectPath(ctx, contentX, contentY, imgWidth, imgHeight, radius);
   ctx.fill();
 
@@ -861,8 +866,7 @@ async function exportSelectedAsImage() {
   const CARD_MAX_HEIGHT = 100 * SCALE * CARD_SIZE_FACTOR;
   const HGAP = 10; // Horizontal gap between images
   const VGAP = 28; // Vertical gap between rows
-  const BORDER_WIDTH = 2;
-  const RADIUS = 5 * SCALE;
+  const BORDER_WIDTH = 3;
   const HEADER_HEIGHT = 88;
   const HEADER_BOTTOM_GAP = 30; // Gap between header background and first title
   const TITLE_BASE_FONT_SIZE = 12;
@@ -870,15 +874,18 @@ async function exportSelectedAsImage() {
   const TITLE_MAX_LINES = 5;
   const TITLE_GAP = 4 * SCALE;
   const FOOTER_HEIGHT = 48;
+  const CARD_RADIUS = 15;
 
   const contentWidth = CANVAS_WIDTH - PADDING * 2;
   const EXPORT_COLORS = {
-    page: "#fff8f9",
-    panel: "#ffffff",
-    pink: "#c83d55",
-    pinkDeep: "#b72e46",
-    roseBorder: "#f0e0e5",
-    textMuted: "#5f6673",
+    page: "#fff7e6",
+    panel: "#f7c8d3",
+    pinkDeep: "#2d3a47",
+    roseBorder: "#e6cdd0",
+    textMuted: "#46535f",
+    normalBorder: "#b46a72",
+    secretBorder: "#d6aa58",
+    nftBorder: "#a9b7c6",
   };
 
   // Create the canvas up front so its context can measure/wrap title text before final sizing.
@@ -900,7 +907,11 @@ async function exportSelectedAsImage() {
       const tags = card.dataset.tags || "";
       const isRareColor = card.classList.contains("secret") || tags.includes("SUPER RARE") || tags.includes("SUPER SECRET RARE");
       const isNFT = tags.includes("NFT Card");
-      const borderColor = isRareColor ? "#ffc600" : isNFT ? "#6f4630" : "#ca3e52";
+      const borderColor = isRareColor
+        ? EXPORT_COLORS.secretBorder
+        : isNFT
+          ? EXPORT_COLORS.nftBorder
+          : EXPORT_COLORS.normalBorder;
 
       let imgWidth = CARD_MAX_WIDTH;
       let imgHeight = CARD_MAX_HEIGHT;
@@ -916,6 +927,7 @@ async function exportSelectedAsImage() {
         imgWidth,
         imgHeight,
         borderColor,
+        radius: CARD_RADIUS,
         image,
         groupIndex,
         groupTitle: group.title,
@@ -990,7 +1002,7 @@ async function exportSelectedAsImage() {
   ctx.fillRect(0, HEADER_HEIGHT - 2, canvas.width, 2);
 
   const heroTitle = document.querySelector(".hero h1")?.textContent ?? "";
-  const heroSubtitle = document.querySelector(".hero p")?.textContent ?? "";
+  const heroSubtitle = document.querySelector(".hero-credit")?.textContent ?? "";
 
   ctx.textAlign = "center";
   ctx.fillStyle = EXPORT_COLORS.pinkDeep;
@@ -1014,7 +1026,7 @@ async function exportSelectedAsImage() {
 
     row.forEach((item) => {
       if (item.titleLines) {
-        ctx.fillStyle = EXPORT_COLORS.pink;
+        ctx.fillStyle = EXPORT_COLORS.pinkDeep;
         ctx.font = `700 ${item.titleFontSize}px 'Noto Sans Thai', sans-serif`;
         item.titleLines.forEach((line, index) => {
           ctx.fillText(line, x, y + index * item.titleLineHeight + item.titleLineHeight * 0.8);
@@ -1022,7 +1034,7 @@ async function exportSelectedAsImage() {
       }
 
       const cardY = y + titleSpace + (cardsHeight - item.height) / 2;
-      drawCardOntoCanvas(ctx, item.image, x, cardY, item.imgWidth, item.imgHeight, item.borderColor, BORDER_WIDTH, RADIUS);
+      drawCardOntoCanvas(ctx, item.image, x, cardY, item.imgWidth, item.imgHeight, item.borderColor, BORDER_WIDTH, item.radius);
       x += item.width + HGAP;
     });
 
@@ -1126,7 +1138,8 @@ function filterCards() {
     const rarityMatch = (rarityFilters.has("NORMAL") && !hasRarityTag) || tags.some((tag) => rarityFilters.has(tag));
 
     const folderMatch = folderFilters.has(card.dataset.folder);
-    card.style.display = categoryMatch && rarityMatch && folderMatch ? "inline-flex" : "none";
+    const isVisible = categoryMatch && rarityMatch && folderMatch;
+    card.style.display = isVisible ? "" : "none";
   });
 
   document.querySelectorAll(".group-section").forEach((section) => {
@@ -1137,7 +1150,7 @@ function filterCards() {
         break;
       }
     }
-    section.style.display = anyVisible ? "block" : "none";
+    section.style.display = anyVisible ? "" : "none";
   });
 
   updatePageCount();
@@ -1145,6 +1158,7 @@ function filterCards() {
 
 function init() {
   setupCheckboxFilters();
+  setupFilterSidebar();
   setupBackToTop();
   setupExportBar();
 
@@ -1161,8 +1175,7 @@ function init() {
 
     group.files.forEach((fileName) => {
       const src = `./source/${group.folder}/${fileName}`;
-      const alt = fileName.replace(/\.[^.]+$/, "").replace(/_/g, " ");
-      const card = createTemplateCard(src, alt, fileName);
+      const card = createTemplateCard(src, fileName);
       card.dataset.folder = group.title;
       row.appendChild(card);
     });
@@ -1178,15 +1191,27 @@ function init() {
 
 function setupBackToTop() {
   const backToTop = document.getElementById("backToTop");
-  if (!backToTop) return;
+  const scrollToBottom = document.getElementById("scrollToBottom");
+  if (!backToTop || !scrollToBottom) return;
 
   backToTop.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  window.addEventListener("scroll", () => {
-    backToTop.classList.toggle("visible", window.scrollY > 150);
+  scrollToBottom.addEventListener("click", () => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
   });
+
+  const updateScrollButtons = () => {
+    const scrollY = window.scrollY;
+    const atBottom = scrollY + window.innerHeight >= document.documentElement.scrollHeight - 150;
+    backToTop.classList.toggle("visible", scrollY > 150);
+    scrollToBottom.classList.toggle("visible", !atBottom);
+  };
+
+  window.addEventListener("scroll", updateScrollButtons);
+  window.addEventListener("resize", updateScrollButtons);
+  updateScrollButtons();
 }
 
 init();
