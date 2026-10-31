@@ -3,22 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JANJINGJINGJEWEL PHOTOCARD LIST</title>
+    <meta name="theme-color" content="#fff7e6" />
+    <meta name="description" content="Browse, filter, and collect the JanJingjingJewel photocard checklist." />
+    <title>JanJingjingJewel · Photocard List</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="hero">
-        <h1>JANJINGJINGJEWEL PHOTOCARD LIST</h1>
-        <p>Personal Use Only. Photo credit to the owners. By twitter @lyfye_</p>
+        <div class="hero-inner">
+          <h1>JanJingjingJewel <span>Photocard List</span></h1>
+          <span class="hero-credit">Personal use only · Photo credit to the owners · By @lyfye_</span>
+        </div>
       </section>
 
-      <div class="page-count-wrap">
-        <div class="page-count" id="pageCount" aria-live="polite">0 photocards</div>
-        <div class="rarity-legend" aria-label="Rarity color legend">
+      <div class="page-count-wrap" aria-label="Collection summary">
+        <div class="summary-actions">
+          <button type="button" class="filter-sidebar-toggle" id="filterSidebarToggle" aria-controls="filterSidebar" aria-expanded="false">
+            <span aria-hidden="true">&#9776;</span>
+            Filters
+          </button>
+        </div>
+        <div class="rarity-legend" aria-label="Photocard and rarity counts">
+          <span class="rarity-item rarity-total-item">
+            <span>Photocards</span>
+            <span class="rarity-count" id="pageCount" aria-live="polite">0</span>
+          </span>
           <span class="rarity-item">
             <span class="rarity-swatch"></span>
             <span>Normal</span>
@@ -37,37 +51,48 @@
         </div>
       </div>
 
-      <section class="builder">
-        <div class="filter-row">
-          <div class="filter-title">Choose your J</div>
-          <div class="filter-dropdown">
-            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-              <span class="filter-dropdown-label">All</span>
-              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
-            </button>
-            <div class="filter-options" id="categoryFilter" aria-label="Choose your J"></div>
-          </div>
+      <aside class="filter-sidebar" id="filterSidebar" aria-label="Photocard filters" aria-hidden="true" inert>
+        <div class="filter-sidebar-header">
+          <h2>Filters</h2>
+          <button type="button" class="filter-sidebar-close" id="filterSidebarClose" aria-label="Close filters">&times;</button>
         </div>
-        <div class="filter-row">
-          <div class="filter-title">Rarity</div>
-          <div class="filter-dropdown">
-            <button type="button" class="filter-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-              <span class="filter-dropdown-label">All</span>
-              <span class="filter-dropdown-arrow" aria-hidden="true">&#9662;</span>
-            </button>
-            <div class="filter-options" id="rarityFilter" aria-label="Rarity"></div>
+        <div class="filter-panel">
+          <div class="filter-row filter-row-inline">
+            <div class="filter-heading-row">
+              <span class="filter-title">Choose your J</span>
+              <div class="filter-header-actions" aria-label="Choose your J filter actions">
+                <button type="button" class="filter-clear-btn" id="categorySelectAll">Select All</button>
+                <button type="button" class="filter-clear-btn" id="categoryClear">Clear</button>
+              </div>
+            </div>
+            <div class="filter-options filter-options-inline" id="categoryFilter" aria-label="Choose your J"></div>
           </div>
+          <div class="filter-row filter-row-inline">
+            <div class="filter-heading-row">
+              <span class="filter-title">Rarity</span>
+              <div class="filter-header-actions" aria-label="Rarity filter actions">
+                <button type="button" class="filter-clear-btn" id="raritySelectAll">Select All</button>
+                <button type="button" class="filter-clear-btn" id="rarityClear">Clear</button>
+              </div>
+            </div>
+            <div class="filter-options filter-options-inline" id="rarityFilter" aria-label="Rarity"></div>
+          </div>
+          <section class="collection-filter" id="collectionFilter" aria-label="Collections filter">
+            <div class="collection-filter-header">
+              <span class="collection-filter-label">Collections</span>
+              <span class="collection-filter-count" id="collectionFilterCount" aria-live="polite"></span>
+              <div class="filter-header-actions" aria-label="Collections filter actions">
+                <button type="button" class="filter-clear-btn" id="folderSelectAll">Select All</button>
+                <button type="button" class="filter-clear-btn" id="folderClear">Clear</button>
+              </div>
+            </div>
+            <div class="collection-options filter-options" id="folderFilter" aria-label="Collections"></div>
+          </section>
         </div>
-        <section class="collection-filter collapsed" id="collectionFilter" aria-label="Collections filter">
-          <div class="collection-filter-header">
-            <button type="button" class="collection-filter-toggle" id="collectionsExpanded" aria-label="Expand collections" aria-controls="folderFilter" aria-expanded="false">
-              <span class="collection-filter-arrow" aria-hidden="true">&#9656;</span>
-              <span>Collections</span>
-            </button>
-            <span class="collection-filter-count" id="collectionFilterCount" aria-live="polite"></span>
-          </div>
-          <div class="collection-options filter-options" id="folderFilter" aria-label="Collections"></div>
-        </section>
+      </aside>
+      <button type="button" class="filter-sidebar-backdrop" id="filterSidebarBackdrop" aria-label="Close filters" tabindex="-1" hidden></button>
+
+      <section class="builder" aria-label="Photocard List">
         <div class="gallery" id="galleryGroups"></div>
       </section>
     </main>
@@ -80,9 +105,10 @@
     </footer>
 
     <button type="button" id="backToTop" class="back-to-top" aria-label="Scroll to top">&#9650;</button>
+    <button type="button" id="scrollToBottom" class="back-to-top scroll-to-bottom" aria-label="Scroll to bottom">&#9660;</button>
 
     <div class="export-bar">
-      <div class="export-bar-hint">Click on Photocard to select</div>
+      <div class="export-bar-hint">Tap a card to select it</div>
       <div class="export-bar-info" id="selectionCount" aria-live="polite">0 selected</div>
       <div class="export-bar-actions">
         <button type="button" class="export-btn export-btn-ghost" id="selectAllBtn">Select All</button>
