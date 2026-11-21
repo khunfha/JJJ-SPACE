@@ -391,7 +391,31 @@ const sourceGroups = [
       "20-o-jj-secret.png",
       "20-o-jjj1-secret.png",
       "20-o-jjj2-secret.png",
-      "20-o-jjj-jewel-secret.png",
+      "20-o-jjj3-jewel-secret.png",
+    ],
+  },
+  {
+    folder: "bwy",
+    title: "JAN JINGJING BEWITCH YOU FANCON Transparent Photoset",
+    files: [
+      "20-t-j1.png",
+      "20-t-jj1.png",
+      "20-t-jjj1.png",
+      "20-t-jjj2.png",
+    ],
+  },
+  {
+    folder: "bwy",
+    title: "JAN JINGJING BEWITCH YOU FANCON Jewel Card Holder",
+    files: [
+      "20-h-jjj1.png",
+    ],
+  },
+  {
+    folder: "bwy",
+    title: "JAN JINGJING BEWITCH YOU FANCON Acrylic Photo Display Set",
+    files: [
+      "20-a-jjj1.png",
     ],
   },
   {
