@@ -439,7 +439,7 @@ const sourceGroups = [
     ],
   },
   {
-    folder: "pop-up malaysia 2026",
+    folder: "starlympics",
     title: "GMMTV STARLYMPICS 2026 Girls Collectible Random Card",
     files: [
       "19-c-j1.png",
