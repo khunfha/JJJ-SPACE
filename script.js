@@ -471,12 +471,13 @@ const pageCount = document.getElementById("pageCount");
 const categoryFilterContainer = document.getElementById("categoryFilter");
 const rarityFilterContainer = document.getElementById("rarityFilter");
 const folderFilterContainer = document.getElementById("folderFilter");
-const categoryFilterTags = ["JAN", "JINGJING", "JANJINGJING", "JEWEL"];
+const categoryFilterTags = ["JAN", "JINGJING", "JANJINGJING", "JJJ Fam", "JEWEL"];
 const categoryFilterIcons = {
   JAN: "./source/header/jan.png",
   JINGJING: "./source/header/jingjing.png",
   JEWEL: "./source/header/jewel.png",
   JANJINGJING: "./source/header/janjingjing.png",
+  "JJJ Fam": "./source/header/jjj.png",
 };
 const rarityFilterTags = ["NORMAL", "SECRET", "SUPER RARE", "SUPER SECRET RARE", "NFT Card"];
 const filterFolders = [...new Set(sourceGroups.map((group) => group.title))];
@@ -660,7 +661,10 @@ function createTemplateCard(src, fileName) {
   }
 
   let categoryTag = null;
-  if (/-jjj(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName)) {
+  const isJJJFam = /-jjjj(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName);
+  if (isJJJFam) {
+    categoryTag = "JJJ Fam";
+  } else if (/-jjj(?!j)(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName)) {
     categoryTag = "JANJINGJING";
   } else if (/-jj(?:[\w-]*)(?:[^\w]|$)/i.test(lowerFileName)) {
     categoryTag = "JINGJING";
