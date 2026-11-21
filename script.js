@@ -391,7 +391,7 @@ const sourceGroups = [
       "20-o-jj-secret.png",
       "20-o-jjj1-secret.png",
       "20-o-jjj2-secret.png",
-      "20-o-jjj3-jewel-secret.png",
+      "20-o-jjjj-secret.png",
     ],
   },
   {
