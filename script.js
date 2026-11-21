@@ -452,6 +452,18 @@ const sourceGroups = [
       "19-c-jj-secret.png",
     ],
   },
+  {
+    folder: "gemm house",
+    title: "GEMM HOUSE JEWEL Frozen Bar Random Card",
+    files: [
+      "13-jewel-1.png",
+      "13-jewel-2.png",
+      "13-jewel-3.png",
+      "13-jewel-4.png",
+      "13-jewel-5.png",
+      "13-jewel-secret.png",
+    ],
+  },
 ];
 
 const galleryGroups = document.getElementById("galleryGroups");
