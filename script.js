@@ -456,12 +456,12 @@ const sourceGroups = [
     folder: "gemm house",
     title: "GEMM HOUSE JEWEL Frozen Bar Random Card",
     files: [
-      "13-jewel-1.png",
-      "13-jewel-2.png",
-      "13-jewel-3.png",
-      "13-jewel-4.png",
-      "13-jewel-5.png",
-      "13-jewel-secret.png",
+      "13-fb-jewel-1.png",
+      "13-fb-jewel-2.png",
+      "13-fb-jewel-3.png",
+      "13-fb-jewel-4.png",
+      "13-fb-jewel-5.png",
+      "13-fb-jewel-secret.png",
     ],
   },
 ];
